@@ -5,13 +5,16 @@ import android.graphics.BitmapFactory;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.example.home.secureforwarding.DataHandler.CreateDataShares;
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
 import com.example.home.secureforwarding.Entities.CompleteFiles;
+import com.example.home.secureforwarding.Entities.KeyStore;
 import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.CreateKeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
@@ -21,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -39,6 +43,9 @@ public class DetailActivity extends AppCompatActivity {
 
     @BindView(R.id.createsharebtn)
     public Button shareBtn;
+
+    @BindView(R.id.deviceIds)
+    Spinner deviceIds;
 
     private AppDatabase database;
     private Disposable disposable;
@@ -95,6 +102,11 @@ public class DetailActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         database = AppDatabase.getAppDatabase(this);
+
+        List<KeyStore> keystore = database.dao().getKeyStores();
+        ArrayAdapter<KeyStore> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, keystore);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        deviceIds.setAdapter(adapter);
 
         file = (File) getIntent().getSerializableExtra(MainActivity.INTENT_IMG);
         Log.d(TAG, "Obtained file:" + file.getName());

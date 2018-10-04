@@ -5,7 +5,7 @@ import android.arch.persistence.room.Entity;
 import android.support.annotation.NonNull;
 
 @Entity(primaryKeys = {"id", "file_id", "share_type"})
-public class Shares {
+public class OwnShares {
     @ColumnInfo(name = "id")
     @NonNull
     private String id;
@@ -85,7 +85,7 @@ public class Shares {
         this.data = data;
     }
 
-    public Shares(String id, int fileId, String type, String shareType, int status, String senderInfo, byte[] data) {
+    public OwnShares(String id, int fileId, String type, String shareType, int status, String senderInfo, byte[] data) {
         this.id = id;
         this.fileId = fileId;
         this.type = type;

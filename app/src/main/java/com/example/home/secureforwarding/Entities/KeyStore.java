@@ -36,4 +36,9 @@ public class KeyStore {
         this.id = id;
         this.publicKey = publicKey;
     }
+
+    @Override
+    public String toString() {
+        return id;
+    }
 }

@@ -1,6 +1,5 @@
 package com.example.home.secureforwarding.DatabaseHandler;
 
-import android.arch.persistence.db.SupportSQLiteOpenHelper;
 import android.arch.persistence.room.Database;
 import android.arch.persistence.room.Room;
 import android.arch.persistence.room.RoomDatabase;
@@ -8,9 +7,9 @@ import android.content.Context;
 
 import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.Entities.KeyStore;
-import com.example.home.secureforwarding.Entities.Shares;
+import com.example.home.secureforwarding.Entities.OwnShares;
 
-@Database(version = 1, entities = {CompleteFiles.class, KeyStore.class, Shares.class})
+@Database(version = 1, entities = {CompleteFiles.class, KeyStore.class, OwnShares.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase INSTANCE;
     abstract public DatabaseInterface dao();

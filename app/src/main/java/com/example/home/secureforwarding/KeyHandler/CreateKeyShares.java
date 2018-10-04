@@ -3,7 +3,7 @@ package com.example.home.secureforwarding.KeyHandler;
 import android.util.Log;
 
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
-import com.example.home.secureforwarding.Entities.Shares;
+import com.example.home.secureforwarding.Entities.OwnShares;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -73,9 +73,9 @@ public class CreateKeyShares {
             }
         }
 
-        Shares dbShare;
+        OwnShares dbShare;
         for (int i = 0; i < shares.length; i++) {
-            dbShare = new Shares(device_msg_id, shares[i].getNumber(), nodeType, KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i));
+            dbShare = new OwnShares(device_msg_id, shares[i].getNumber(), nodeType, KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i));
             database.dao().insertKeyShares(dbShare);
         }
 
