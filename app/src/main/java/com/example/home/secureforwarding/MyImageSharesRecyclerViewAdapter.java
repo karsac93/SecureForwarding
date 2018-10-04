@@ -54,6 +54,7 @@ public class MyImageSharesRecyclerViewAdapter extends RecyclerView.Adapter<MyIma
     @Override
     public int getItemCount() {
         return mValues.size();
+        //Nothing
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
