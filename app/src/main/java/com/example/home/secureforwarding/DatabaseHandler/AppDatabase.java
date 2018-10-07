@@ -7,9 +7,9 @@ import android.content.Context;
 
 import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.Entities.KeyStore;
-import com.example.home.secureforwarding.Entities.OwnShares;
+import com.example.home.secureforwarding.Entities.Shares;
 
-@Database(version = 1, entities = {CompleteFiles.class, KeyStore.class, OwnShares.class})
+@Database(version = 1, entities = {CompleteFiles.class, KeyStore.class, Shares.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase INSTANCE;
     abstract public DatabaseInterface dao();

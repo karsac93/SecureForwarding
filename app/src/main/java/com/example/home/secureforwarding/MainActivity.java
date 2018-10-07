@@ -1,12 +1,10 @@
 package com.example.home.secureforwarding;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -23,15 +21,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileActivity;
+import com.example.home.secureforwarding.KeyHandler.KeyConstant;
+import com.example.home.secureforwarding.ShareFileActivites.ShareFilesActivity;
 import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import java.io.File;
-import java.io.FileOutputStream;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import io.reactivex.disposables.Disposable;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private String deviceId;
     public static final String INTENT_IMG = "imgFile";
     File file;
+    Intent intent;
 
     String[] PERMISSIONS = {
             android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -58,6 +58,15 @@ public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.cameraBtn)
     public Button cameraBtn;
+
+    @BindView(R.id.ownMsg)
+    Button ownMsg;
+
+    @BindView(R.id.intermsg)
+    Button interMsg;
+
+    @BindView(R.id.destMsg)
+    Button destMsg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +86,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @OnClick(R.id.destMsg)
+    public void showDestImage(){
+        intent = new Intent(this, CompleteFileActivity.class);
+        intent.putExtra(CompleteFileActivity.DISPLAY_INFO, KeyConstant.DEST_TYPE);
+        startActivity(intent);
+    }
+
+    @OnClick(R.id.ownMsg)
+    public void showOwnImages(){
+        intent = new Intent(this, CompleteFileActivity.class);
+        intent.putExtra(CompleteFileActivity.DISPLAY_INFO, KeyConstant.OWNER_TYPE);
+        startActivity(intent);
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -92,6 +115,13 @@ public class MainActivity extends AppCompatActivity {
             saveImage();
         }
 
+    }
+
+    @OnClick(R.id.intermsg)
+    public void showInterMsgs(){
+        intent = new Intent(this, ShareFilesActivity.class);
+        intent.putExtra(ShareFilesActivity.INTENT_ACTION, ShareFilesActivity.INTER_ACTION);
+        startActivity(intent);
     }
 
     private void saveImage() {

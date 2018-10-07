@@ -4,7 +4,7 @@ import android.util.Log;
 
 import com.backblaze.erasure.ReedSolomon;
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
-import com.example.home.secureforwarding.Entities.OwnShares;
+import com.example.home.secureforwarding.Entities.Shares;
 import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
@@ -27,16 +27,18 @@ public class CreateDataShares {
     private byte[] fileByte;
     private byte[] aesKey;
     byte[] signature;
+    String destId;
 
     private static final String TAG = CreateDataShares.class.getSimpleName();
     SingletoneECPRE ecpr = SingletoneECPRE.getInstance();
 
-    public CreateDataShares(String deviceID, String nodeType, AppDatabase database, byte[]fileByte, byte[]aesKey) {
+    public CreateDataShares(String deviceID, String nodeType, AppDatabase database, byte[]fileByte, byte[]aesKey, String destId) {
         this.deviceID = deviceID;
         this.nodeType = nodeType;
         this.database = database;
         this.fileByte = fileByte;
         this.aesKey = aesKey;
+        this.destId = destId;
     }
 
     public byte[] generateDataShares(){
@@ -71,12 +73,12 @@ public class CreateDataShares {
         ReedSolomon reedSolomon = ReedSolomon.create(DATA_SHARDS, PARITY_SHARDS);
         reedSolomon.encodeParity(shards, 0, shardSize);
 
-        OwnShares ownShares = null;
+        Shares shares = null;
         for(int i=0; i<shards.length; i++) {
             signature = ecpr.SignMessage(shards[i], pvt_key);
-            ownShares = new OwnShares(deviceID, i, KeyConstant.OWNER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
-                    null, shards[i]);
-            database.dao().insertDataShares(ownShares);
+            shares = new Shares(deviceID, i, KeyConstant.OWNER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
+                    null, shards[i], destId);
+            database.dao().insertDataShares(shares);
         }
         return signature;
     }

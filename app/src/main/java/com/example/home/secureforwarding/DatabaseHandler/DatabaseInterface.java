@@ -6,7 +6,7 @@ import android.arch.persistence.room.Query;
 
 import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.Entities.KeyStore;
-import com.example.home.secureforwarding.Entities.OwnShares;
+import com.example.home.secureforwarding.Entities.Shares;
 
 import java.util.List;
 
@@ -15,18 +15,24 @@ public interface DatabaseInterface {
     @Insert
     void insertCompleteFile(CompleteFiles completeFiles);
 
-    @Query("select id from completefiles")
-    List<String> fetchCompleteIds();
+    @Query("select * from completefiles where type=:type")
+    List<CompleteFiles> fetchCompleteFiles(String type);
 
     @Insert
-    void insertKeyShares(OwnShares ownShares);
+    void insertKeyShares(Shares shares);
 
-    @Query("select count(*) from OwnShares")
+    @Query("select count(*) from Shares")
     int numShares();
 
     @Insert
-    void insertDataShares(OwnShares ownShares);
+    void insertDataShares(Shares shares);
 
     @Query("select * from keystore")
     List<KeyStore> getKeyStores();
+
+    @Query("select * from shares where id=:fileId")
+    List<Shares> getShares(String fileId);
+
+    @Query("select * from shares where share_type=:interType")
+    List<Shares> getInterShares(String interType);
 }

@@ -1,4 +1,4 @@
-package com.example.home.secureforwarding;
+package com.example.home.secureforwarding.CompleteFileActivites;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -10,8 +10,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.home.secureforwarding.dummy.DummyContent;
-import com.example.home.secureforwarding.dummy.DummyContent.DummyItem;
+import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
+import com.example.home.secureforwarding.Entities.CompleteFiles;
+import com.example.home.secureforwarding.KeyHandler.KeyConstant;
+import com.example.home.secureforwarding.R;
 
 import java.util.List;
 
@@ -21,10 +23,11 @@ import java.util.List;
  * Activities containing this fragment MUST implement the {@link OnListFragmentInteractionListener}
  * interface.
  */
-public class ImageSharesFragment extends Fragment {
+public class CompleteFileFragment extends Fragment {
 
     // TODO: Customize parameters
     private int mColumnCount = 1;
+    private Context context;
 
     private OnListFragmentInteractionListener mListener;
 
@@ -32,20 +35,22 @@ public class ImageSharesFragment extends Fragment {
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public ImageSharesFragment() {
+    public CompleteFileFragment() {
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        context = getContext();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_imageshares_list, container, false);
-
+        View view = inflater.inflate(R.layout.fragment_completefile_list, container, false);
+        String shareType = getArguments().getString(CompleteFileActivity.DISPLAY_INFO);
+        AppDatabase database = AppDatabase.getAppDatabase(context);
+        List<CompleteFiles> completeFiles = database.dao().fetchCompleteFiles(shareType);
         // Set the adapter
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
@@ -55,7 +60,7 @@ public class ImageSharesFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new MyImageSharesRecyclerViewAdapter(DummyContent.ITEMS, mListener));
+            recyclerView.setAdapter(new CompleteFileRecyclerViewAdapter(completeFiles, mListener));
         }
         return view;
     }
@@ -68,7 +73,7 @@ public class ImageSharesFragment extends Fragment {
             mListener = (OnListFragmentInteractionListener) context;
         } else {
             throw new RuntimeException(context.toString()
-                    + " must implement OnListFragmentInteractionListener");
+                    + " must implement OnListKeyFragmentInteractionListener");
         }
     }
 
@@ -90,6 +95,6 @@ public class ImageSharesFragment extends Fragment {
      */
     public interface OnListFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onListFragmentInteraction(DummyItem item);
+        void onListFragmentInteraction(CompleteFiles item);
     }
 }

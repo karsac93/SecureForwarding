@@ -5,10 +5,14 @@ import android.arch.persistence.room.Entity;
 import android.support.annotation.NonNull;
 
 @Entity(primaryKeys = {"id", "file_id", "share_type"})
-public class OwnShares {
+public class Shares {
     @ColumnInfo(name = "id")
     @NonNull
     private String id;
+
+    @NonNull
+    @ColumnInfo(name="dest_id")
+    private String destId;
 
     @ColumnInfo(name = "file_id")
     private int fileId;
@@ -85,7 +89,16 @@ public class OwnShares {
         this.data = data;
     }
 
-    public OwnShares(String id, int fileId, String type, String shareType, int status, String senderInfo, byte[] data) {
+    @NonNull
+    public String getDestId() {
+        return destId;
+    }
+
+    public void setDestId(@NonNull String destId) {
+        this.destId = destId;
+    }
+
+    public Shares(String id, int fileId, String type, String shareType, int status, String senderInfo, byte[] data, String destId) {
         this.id = id;
         this.fileId = fileId;
         this.type = type;
@@ -93,5 +106,6 @@ public class OwnShares {
         this.status = status;
         this.senderInfo = senderInfo;
         this.data = data;
+        this.destId = destId;
     }
 }

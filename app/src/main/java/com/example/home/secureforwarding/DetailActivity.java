@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -51,6 +52,9 @@ public class DetailActivity extends AppCompatActivity {
     private Disposable disposable;
     File file;
 
+    @BindView(R.id.destId)
+    EditText destId;
+
     Observer<File> shareObserver = new Observer<File>() {
         @Override
         public void onSubscribe(Disposable d) {
@@ -61,15 +65,16 @@ public class DetailActivity extends AppCompatActivity {
         @Override
         public void onNext(File value) {
             Log.d(TAG, "OOH OOH, I'm here" + value.getName());
+            String dest = destId.getText().toString().trim();
             AEScrypto aesCrypto = new AEScrypto();
             byte[] key = aesCrypto.GenerateKey();
             byte[] fileByte = new byte[(int) value.length()];
             try {
                 FileInputStream fileInputStream = new FileInputStream(value);
                 fileInputStream.read(fileByte);
-                CreateDataShares createDataShares = new CreateDataShares(value.getName(), KeyConstant.OWNER_TYPE, database, fileByte, key);
+                CreateDataShares createDataShares = new CreateDataShares(value.getName(), KeyConstant.OWNER_TYPE, database, fileByte, key, dest);
                 byte[] sign = createDataShares.generateDataShares();
-                CreateKeyShares createKeyShares = new CreateKeyShares(value.getName(), KeyConstant.OWNER_TYPE, database, key, sign);
+                CreateKeyShares createKeyShares = new CreateKeyShares(value.getName(), KeyConstant.OWNER_TYPE, database, key, sign, dest);
                 createKeyShares.generateKeyShares();
                 Log.d(TAG, "Total number of inserted data and key shares:" + database.dao().numShares());
                 DetailActivity.this.runOnUiThread(new Runnable() {
@@ -83,6 +88,7 @@ public class DetailActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
+
 
         @Override
         public void onError(Throwable e) {
@@ -123,24 +129,31 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     @OnClick(R.id.createsharebtn)
-    public void createKeyDataShares(){
-        CompleteFiles completeFiles = new CompleteFiles();
-        completeFiles.setId(file.getName());
-        completeFiles.setId(file.getAbsolutePath());
-        database.dao().insertCompleteFile(completeFiles);
-        Log.d(TAG, "Main thread name:" + Thread.currentThread().getName());
-        Observable.just(file)
-                .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.newThread())
-                .subscribe(shareObserver);
+    public void createKeyDataShares() {
+        String dest = destId.getText().toString().trim();
+        if (dest == null || dest.trim().length() == 0)
+            Toast.makeText(DetailActivity.this, "Please enter the destID", Toast.LENGTH_SHORT).show();
+        else {
+            CompleteFiles completeFiles = new CompleteFiles();
+            completeFiles.setId(file.getName());
+            completeFiles.setFilePath(file.getAbsolutePath());
+            completeFiles.setType(KeyConstant.OWNER_TYPE);
+            completeFiles.setDestId(destId.getText().toString());
+            Log.d(TAG, "destId" + destId.getText().toString());
+            database.dao().insertCompleteFile(completeFiles);
+            Log.d(TAG, "Main thread name:" + Thread.currentThread().getName());
+            Observable.just(file)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(Schedulers.newThread())
+                    .subscribe(shareObserver);
+        }
     }
-
 
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(disposable !=null)
+        if (disposable != null)
             disposable.dispose();
         AppDatabase.destroyInstance();
     }

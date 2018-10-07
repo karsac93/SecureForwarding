@@ -3,7 +3,7 @@ package com.example.home.secureforwarding.KeyHandler;
 import android.util.Log;
 
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
-import com.example.home.secureforwarding.Entities.OwnShares;
+import com.example.home.secureforwarding.Entities.Shares;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -18,18 +18,20 @@ public class CreateKeyShares {
     private AppDatabase database;
     private byte[] key;
     private byte[] sign;
+    private String destId;
 
 
 
     SingletoneECPRE ecpr = SingletoneECPRE.getInstance();
     private static final String TAG = CreateKeyShares.class.getSimpleName();
 
-    public CreateKeyShares(String device_msg_id, String nodeType, AppDatabase database, byte[] key, byte[] sign) {
+    public CreateKeyShares(String device_msg_id, String nodeType, AppDatabase database, byte[] key, byte[] sign, String destId) {
         this.device_msg_id = device_msg_id;
         this.nodeType = nodeType;
         this.database = database;
         this.key = key;
         this.sign = sign;
+        this.destId = destId;
     }
 
     public void generateKeyShares() {
@@ -73,9 +75,10 @@ public class CreateKeyShares {
             }
         }
 
-        OwnShares dbShare;
+        Shares dbShare;
         for (int i = 0; i < shares.length; i++) {
-            dbShare = new OwnShares(device_msg_id, shares[i].getNumber(), nodeType, KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i));
+            dbShare = new Shares(device_msg_id, shares[i].getNumber(), nodeType,
+                    KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i),destId);
             database.dao().insertKeyShares(dbShare);
         }
 
