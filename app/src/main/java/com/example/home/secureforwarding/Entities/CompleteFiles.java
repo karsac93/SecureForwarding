@@ -12,6 +12,14 @@ public class CompleteFiles {
     @NonNull
     private String id;
 
+    @NonNull
+    @ColumnInfo(name="type")
+    private String type;
+
+    @NonNull
+    @ColumnInfo(name="dest_id")
+    private String destId;
+
     @ColumnInfo(name = "path")
     private String filePath;
 
@@ -29,6 +37,34 @@ public class CompleteFiles {
 
     public void setFilePath(String filePath) {
         this.filePath = filePath;
+    }
+
+    @NonNull
+    public String getType() {
+        return type;
+    }
+
+    public void setType(@NonNull String type) {
+        this.type = type;
+    }
+
+    @NonNull
+    public String getDestId() {
+        return destId;
+    }
+
+    public void setDestId(@NonNull String destId) {
+        this.destId = destId;
+    }
+
+    @Override
+    public String toString() {
+        return "CompleteFiles{" +
+                "id='" + id + '\'' +
+                ", type='" + type + '\'' +
+                ", destId='" + destId + '\'' +
+                ", filePath='" + filePath + '\'' +
+                '}';
     }
 }
 

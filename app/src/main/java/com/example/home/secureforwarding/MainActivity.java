@@ -1,13 +1,15 @@
 package com.example.home.secureforwarding;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.StrictMode;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
@@ -19,15 +21,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileActivity;
+import com.example.home.secureforwarding.KeyHandler.KeyConstant;
+import com.example.home.secureforwarding.ShareFileActivites.ShareFilesActivity;
 import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import java.io.File;
-import java.io.FileOutputStream;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import io.reactivex.disposables.Disposable;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -39,7 +42,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String IMG_NUM_KEY = "image_num";
     private String deviceId;
     public static final String INTENT_IMG = "imgFile";
-    Bitmap photo;
+    File file;
+    Intent intent;
 
     String[] PERMISSIONS = {
             android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -55,15 +59,22 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.cameraBtn)
     public Button cameraBtn;
 
-    Disposable disposable;
+    @BindView(R.id.ownMsg)
+    Button ownMsg;
 
+    @BindView(R.id.intermsg)
+    Button interMsg;
 
+    @BindView(R.id.destMsg)
+    Button destMsg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
         if (SharedPreferenceHandler.getStringValues(this, DEVICE_ID).length() == 0) {
             displayDeviceid.append("Please set device ID");
         } else {
@@ -73,6 +84,20 @@ public class MainActivity extends AppCompatActivity {
         if (!displayDeviceid.getText().toString().contains("Please set device ID")) {
             cameraBtn.setVisibility(View.VISIBLE);
         }
+    }
+
+    @OnClick(R.id.destMsg)
+    public void showDestImage(){
+        intent = new Intent(this, CompleteFileActivity.class);
+        intent.putExtra(CompleteFileActivity.DISPLAY_INFO, KeyConstant.DEST_TYPE);
+        startActivity(intent);
+    }
+
+    @OnClick(R.id.ownMsg)
+    public void showOwnImages(){
+        intent = new Intent(this, CompleteFileActivity.class);
+        intent.putExtra(CompleteFileActivity.DISPLAY_INFO, KeyConstant.OWNER_TYPE);
+        startActivity(intent);
     }
 
     @Override
@@ -86,49 +111,53 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "Requesting Permission");
             ActivityCompat.requestPermissions(this, PERMISSIONS, REQ_PERMISSION);
         } else {
+            createFile();
             saveImage();
         }
 
     }
 
+    @OnClick(R.id.intermsg)
+    public void showInterMsgs(){
+        intent = new Intent(this, ShareFilesActivity.class);
+        intent.putExtra(ShareFilesActivity.INTENT_ACTION, ShareFilesActivity.INTER_ACTION);
+        startActivity(intent);
+    }
+
     private void saveImage() {
+        Uri imageUri = Uri.fromFile(file);
         Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
         startActivityForResult(cameraIntent, CAMERA_REQUEST);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, final Intent data) {
-        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
-            photo = (Bitmap) data.getExtras().get("data");
-            File file = saveBitmap(photo);
-            Intent intent = new Intent(MainActivity.this, DetailActivity.class);
-            intent.putExtra(INTENT_IMG, file);
-            startActivity(intent);
+        if(requestCode == CAMERA_REQUEST){
+            if(resultCode != RESULT_CANCELED){
+                Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+                intent.putExtra(INTENT_IMG, file);
+                startActivity(intent);
+            }
+            else{
+                file.delete();
+            }
         }
-
     }
 
-    private File saveBitmap(Bitmap photo) {
+
+    private void createFile() {
         String root = Environment.getExternalStorageDirectory().toString();
         int fileNum = SharedPreferenceHandler.getIntValues(this, IMG_NUM_KEY);
         SharedPreferenceHandler.setIntValues(this, IMG_NUM_KEY, fileNum + 1);
         File myDir = new File(root + "/SecureForwarding/OwnMessage/");
         myDir.mkdirs();
         String id = displayDeviceid.getText().toString();
-        String fname =  id.substring(id.indexOf(":")+1, id.length())+ "_" + fileNum + ".jpg";
-        File file = new File(myDir, fname);
+        String fname = id.substring(id.indexOf(":") + 1, id.length()) + "_" + fileNum + ".jpg";
+        file = new File(myDir, fname);
         Log.i(TAG, "" + file);
         if (file.exists())
             file.delete();
-        try {
-            FileOutputStream out = new FileOutputStream(file);
-            photo.compress(Bitmap.CompressFormat.PNG, 0, out);
-            out.flush();
-            out.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return file;
     }
 
     public static boolean hasPermissions(Context context, String... permissions) {
@@ -158,6 +187,7 @@ public class MainActivity extends AppCompatActivity {
                             return;
                         }
                     }
+                    createFile();
                     saveImage();
                 }
                 break;
@@ -194,12 +224,21 @@ public class MainActivity extends AppCompatActivity {
                 dialog.cancel();
             }
         });
-        if (!displayDeviceid.getText().toString().contains("Please set device ID"))
-            input.setText("");
-        else
-            input.setText(displayDeviceid.getText().subSequence(displayDeviceid.getText().toString().indexOf(":") + 1, displayDeviceid.getText().toString().length()));
         builder.show();
     }
 
+    public String getRealPathFromURI(Context context, Uri contentUri) {
+        Cursor cursor = null;
+        try {
+            cursor = context.getContentResolver().query(contentUri, null, null, null, null);
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.ImageColumns.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
 
 }

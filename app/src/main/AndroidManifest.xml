@@ -19,7 +19,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".DetailActivity"></activity>
+        <activity android:name=".DetailActivity" />
+        <activity android:name=".CompleteFileActivites.CompleteFileActivity" />
+        <activity android:name=".ShareFileActivites.ShareFilesActivity" />
+        <activity android:name=".ShareFileActivites.ChooseEncryption"></activity>
     </application>
 
 </manifest>

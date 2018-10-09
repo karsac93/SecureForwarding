@@ -1,6 +1,5 @@
 package com.example.home.secureforwarding.DatabaseHandler;
 
-import android.arch.persistence.db.SupportSQLiteOpenHelper;
 import android.arch.persistence.room.Database;
 import android.arch.persistence.room.Room;
 import android.arch.persistence.room.RoomDatabase;
