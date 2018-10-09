@@ -130,6 +130,7 @@ public class DetailActivity extends AppCompatActivity {
 
     @OnClick(R.id.createsharebtn)
     public void createKeyDataShares() {
+        shareBtn.setEn
         String dest = destId.getText().toString().trim();
         if (dest == null || dest.trim().length() == 0)
             Toast.makeText(DetailActivity.this, "Please enter the destID", Toast.LENGTH_SHORT).show();

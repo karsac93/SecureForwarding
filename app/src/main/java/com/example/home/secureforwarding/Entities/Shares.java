@@ -4,11 +4,16 @@ import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
 import android.support.annotation.NonNull;
 
+import java.io.Serializable;
+
 @Entity(primaryKeys = {"id", "file_id", "share_type"})
-public class Shares {
+public class Shares implements Serializable {
     @ColumnInfo(name = "id")
     @NonNull
     private String id;
+
+    @ColumnInfo(name = "encrypted_node_num")
+    private String encryptedNodeNum;
 
     @NonNull
     @ColumnInfo(name="dest_id")
@@ -87,6 +92,14 @@ public class Shares {
 
     public void setData(byte[] data) {
         this.data = data;
+    }
+
+    public String getEncryptedNodeNum() {
+        return encryptedNodeNum;
+    }
+
+    public void setEncryptedNodeNum(String encryptedNodeNum) {
+        this.encryptedNodeNum = encryptedNodeNum;
     }
 
     @NonNull
