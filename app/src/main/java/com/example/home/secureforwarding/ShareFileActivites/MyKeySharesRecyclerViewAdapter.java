@@ -6,9 +6,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.example.home.secureforwarding.DataHandler.DataConstant;
 import com.example.home.secureforwarding.Entities.Shares;
+import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.R;
 import com.example.home.secureforwarding.ShareFileActivites.SharesFragment.OnListKeyFragmentInteractionListener;
+
+import org.w3c.dom.Text;
 
 import java.util.List;
 
@@ -32,18 +36,31 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.shareFile = mValues.get(position);
-        holder.msg_id.setText("File id:" + holder.shareFile.getId());
-        holder.share_type.setText("Share type:" + holder.shareFile.getShareType());
-        holder.file_id.setText("ID of the share:" + String.valueOf(holder.shareFile.getFileId()));
-        holder.dest_id.setText("Destination id:" + holder.shareFile.getDestId());
+        if(holder.shareFile.getShareType().contains(DataConstant.DATA_TYPE))
+            holder.encryptedNum.setVisibility(View.GONE);
+        else
+            holder.encryptedNum.setVisibility(View.VISIBLE);
+        holder.msg_id.setText("File id: " + holder.shareFile.getId());
+        holder.share_type.setText("Share type: " + holder.shareFile.getShareType());
+        holder.file_id.setText("ID of the share: " + String.valueOf(holder.shareFile.getFileId()));
+        holder.dest_id.setText("Destination id: " + holder.shareFile.getDestId());
+
         String value = "sent";
         if(holder.shareFile.getStatus() == 0)
             value = "Not sent";
-        holder.status.setText(value);
+        holder.status.setText("Status: " + value);
+
         String senderInformation = "null";
         if(holder.shareFile.getSenderInfo() != null)
             senderInformation = holder.shareFile.getSenderInfo();
-        holder.senderInfo.setText("This file sent to:" + senderInformation);
+
+        holder.senderInfo.setText("This file sent to: " + senderInformation);
+
+        String encryptedNum = "Proxy key not generated";
+        if(holder.shareFile.getEncryptedNodeNum() != null && holder.shareFile.getEncryptedNodeNum().length() != 0)
+            encryptedNum = holder.shareFile.getEncryptedNodeNum();
+        holder.encryptedNum.setText("Proxy key generated with: " + encryptedNum);
+
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -70,6 +87,7 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
         public final TextView dest_id;
         public final TextView status;
         public final TextView senderInfo;
+        public final TextView encryptedNum;
 
 
         public Shares shareFile;
@@ -77,12 +95,13 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
         public ViewHolder(View view) {
             super(view);
             mView = view;
-            msg_id = (TextView) view.findViewById(R.id.share_msgId);
-            share_type = (TextView) view.findViewById(R.id.share_type);
-            file_id = (TextView) view.findViewById(R.id.share_file_id);
-            dest_id = (TextView) view.findViewById(R.id.share_destId);
-            status = (TextView) view.findViewById(R.id.share_status);
-            senderInfo = (TextView) view.findViewById(R.id.share_senderinfo);
+            msg_id = view.findViewById(R.id.share_msgId);
+            share_type = view.findViewById(R.id.share_type);
+            file_id = view.findViewById(R.id.share_file_id);
+            dest_id = view.findViewById(R.id.share_destId);
+            status = view.findViewById(R.id.share_status);
+            senderInfo = view.findViewById(R.id.share_senderinfo);
+            encryptedNum = view.findViewById(R.id.share_encyptedNum);
         }
     }
 }

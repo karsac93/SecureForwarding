@@ -38,6 +38,9 @@ public class Shares implements Serializable {
     @ColumnInfo(name = "data", typeAffinity = ColumnInfo.BLOB)
     private byte[] data;
 
+    @ColumnInfo(name="cipher_data", typeAffinity = ColumnInfo.BLOB)
+    private byte[] cipher_data;
+
     public String getId() {
         return id;
     }
@@ -100,6 +103,14 @@ public class Shares implements Serializable {
 
     public void setEncryptedNodeNum(String encryptedNodeNum) {
         this.encryptedNodeNum = encryptedNodeNum;
+    }
+
+    public byte[] getCipher_data() {
+        return cipher_data;
+    }
+
+    public void setCipher_data(byte[] cipher_data) {
+        this.cipher_data = cipher_data;
     }
 
     @NonNull

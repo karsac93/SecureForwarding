@@ -3,6 +3,7 @@ package com.example.home.secureforwarding.SharedPreferenceHandler;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.util.Base64;
 
 public class SharedPreferenceHandler {
     public static SharedPreferences getSharedPreferences(Context ctx) {
@@ -27,5 +28,11 @@ public class SharedPreferenceHandler {
 
     public static int getIntValues(Context ctx, String key) {
         return getSharedPreferences(ctx).getInt(key, 0);
+    }
+
+    public static byte[] getkeys(Context context, String key){
+        String value = getSharedPreferences(context).getString(key, "");
+        byte[] array = Base64.decode(value, Base64.DEFAULT);
+        return array;
     }
 }

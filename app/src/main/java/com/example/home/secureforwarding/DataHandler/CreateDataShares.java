@@ -15,9 +15,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 import static com.example.home.secureforwarding.DataHandler.DataConstant.BYTES_IN_INT;
-import static com.example.home.secureforwarding.DataHandler.DataConstant.DATA_SHARDS;
-import static com.example.home.secureforwarding.DataHandler.DataConstant.PARITY_SHARDS;
-import static com.example.home.secureforwarding.DataHandler.DataConstant.TOTAL_SHARDS;
 
 public class CreateDataShares {
 
@@ -26,24 +23,25 @@ public class CreateDataShares {
     private AppDatabase database;
     private byte[] fileByte;
     private byte[] aesKey;
-    byte[] signature;
+    byte[] signature, pvt_key;
     String destId;
+    int DATA_SHARDS, PARITY_SHARDS, TOTAL_SHARDS;
 
     private static final String TAG = CreateDataShares.class.getSimpleName();
-    SingletoneECPRE ecpr = SingletoneECPRE.getInstance();
 
-    public CreateDataShares(String deviceID, String nodeType, AppDatabase database, byte[]fileByte, byte[]aesKey, String destId) {
+    public CreateDataShares(String deviceID, String nodeType, AppDatabase database, byte[] fileByte, byte[] aesKey, String destId, int dataNum, int parityNum) {
         this.deviceID = deviceID;
         this.nodeType = nodeType;
         this.database = database;
         this.fileByte = fileByte;
         this.aesKey = aesKey;
         this.destId = destId;
+        DATA_SHARDS = dataNum;
+        PARITY_SHARDS = parityNum;
+        TOTAL_SHARDS = DATA_SHARDS + PARITY_SHARDS;
     }
 
     public byte[] generateDataShares(){
-        byte[][] ecpr_keys = ecpr.GetKey(0);
-        byte[] pvt_key = ecpr_keys[0];
         byte[] encodedVal = new AEScrypto().Encrypt(aesKey, fileByte);
         Log.d(TAG, "Encrypted block length:" + encodedVal.length);
         int fileSize = encodedVal.length;
@@ -75,7 +73,7 @@ public class CreateDataShares {
 
         Shares shares = null;
         for(int i=0; i<shards.length; i++) {
-            signature = ecpr.SignMessage(shards[i], pvt_key);
+            signature = SingletoneECPRE.getInstance().SignMessage(shards[i], pvt_key);
             shares = new Shares(deviceID, i, KeyConstant.OWNER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
                     null, shards[i], destId);
             database.dao().insertDataShares(shares);

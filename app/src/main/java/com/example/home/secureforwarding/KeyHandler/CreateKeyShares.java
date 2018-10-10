@@ -21,8 +21,6 @@ public class CreateKeyShares {
     private String destId;
 
 
-
-    SingletoneECPRE ecpr = SingletoneECPRE.getInstance();
     private static final String TAG = CreateKeyShares.class.getSimpleName();
 
     public CreateKeyShares(String device_msg_id, String nodeType, AppDatabase database, byte[] key, byte[] sign, String destId) {
@@ -77,8 +75,9 @@ public class CreateKeyShares {
 
         Shares dbShare;
         for (int i = 0; i < shares.length; i++) {
+            byte[] cipher_data = SingletoneECPRE.getInstance().Encryption(keyShares.get(i));
             dbShare = new Shares(device_msg_id, shares[i].getNumber(), nodeType,
-                    KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i),destId);
+                    KEY_TYPE, NOT_SENT_STATUS, null, cipher_data, destId);
             database.dao().insertKeyShares(dbShare);
         }
 

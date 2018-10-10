@@ -9,6 +9,8 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -19,6 +21,7 @@ import com.example.home.secureforwarding.Entities.KeyStore;
 import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.CreateKeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
+import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -45,15 +48,23 @@ public class DetailActivity extends AppCompatActivity {
     @BindView(R.id.createsharebtn)
     public Button shareBtn;
 
-    @BindView(R.id.deviceIds)
-    Spinner deviceIds;
-
     private AppDatabase database;
     private Disposable disposable;
     File file;
 
     @BindView(R.id.destId)
     EditText destId;
+
+    @BindView(R.id.radioGroup)
+    RadioGroup radioGroup;
+
+    @BindView(R.id.staticPref)
+    RadioButton staticButton;
+
+    @BindView(R.id.dynamicPref)
+    RadioButton dynamicButton;
+
+    int dataNum, parityNum;
 
     Observer<File> shareObserver = new Observer<File>() {
         @Override
@@ -72,7 +83,8 @@ public class DetailActivity extends AppCompatActivity {
             try {
                 FileInputStream fileInputStream = new FileInputStream(value);
                 fileInputStream.read(fileByte);
-                CreateDataShares createDataShares = new CreateDataShares(value.getName(), KeyConstant.OWNER_TYPE, database, fileByte, key, dest);
+                byte[] pvtKey = SharedPreferenceHandler.getkeys(DetailActivity.this, MainActivity.PVT_KEY);
+                CreateDataShares createDataShares = new CreateDataShares(value.getName(), KeyConstant.OWNER_TYPE, database, fileByte, key, dest, dataNum, parityNum);
                 byte[] sign = createDataShares.generateDataShares();
                 CreateKeyShares createKeyShares = new CreateKeyShares(value.getName(), KeyConstant.OWNER_TYPE, database, key, sign, dest);
                 createKeyShares.generateKeyShares();
@@ -108,15 +120,10 @@ public class DetailActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         database = AppDatabase.getAppDatabase(this);
-
-        List<KeyStore> keystore = database.dao().getKeyStores();
-        ArrayAdapter<KeyStore> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, keystore);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        deviceIds.setAdapter(adapter);
-
         file = (File) getIntent().getSerializableExtra(MainActivity.INTENT_IMG);
         Log.d(TAG, "Obtained file:" + file.getName());
 
+        staticButton.setChecked(true);
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         Bitmap bitmap = null;
@@ -130,11 +137,22 @@ public class DetailActivity extends AppCompatActivity {
 
     @OnClick(R.id.createsharebtn)
     public void createKeyDataShares() {
-        shareBtn.setEn
+        shareBtn.setEnabled(false);
         String dest = destId.getText().toString().trim();
         if (dest == null || dest.trim().length() == 0)
             Toast.makeText(DetailActivity.this, "Please enter the destID", Toast.LENGTH_SHORT).show();
         else {
+            int id = radioGroup.getCheckedRadioButtonId();
+            if(id == staticButton.getId()){
+                dataNum = 4;
+                parityNum = 4;
+            }
+            else{
+                int dataShardSize = (int) (file.length() / 512000);
+                Log.d(TAG, "Number of data shards in dynamic:" + dataShardSize + " File length:" + file.length()) ;
+                dataNum = dataShardSize + 1;
+                parityNum = dataNum;
+            }
             CompleteFiles completeFiles = new CompleteFiles();
             completeFiles.setId(file.getName());
             completeFiles.setFilePath(file.getAbsolutePath());

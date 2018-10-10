@@ -15,6 +15,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -23,10 +24,12 @@ import android.widget.TextView;
 
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileActivity;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
+import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.ShareFileActivites.ShareFilesActivity;
 import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import java.io.File;
+import java.util.Arrays;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -42,6 +45,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String IMG_NUM_KEY = "image_num";
     private String deviceId;
     public static final String INTENT_IMG = "imgFile";
+    public static final String PUB_KEY = "pubkey";
+    public static final String PVT_KEY = "prvtkey";
+    public static final String INV_KEY = "invkey";
+
     File file;
     Intent intent;
 
@@ -68,6 +75,15 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.destMsg)
     Button destMsg;
 
+    @BindView(R.id.operations)
+    TextView operationsTxt;
+
+    @BindView(R.id.enable)
+    Button nearbyEnable;
+
+    @BindView(R.id.disable)
+    Button nearbyDisable;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,13 +93,21 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.setVmPolicy(builder.build());
         if (SharedPreferenceHandler.getStringValues(this, DEVICE_ID).length() == 0) {
             displayDeviceid.append("Please set device ID");
+            setVisibilityToElements(View.GONE);
         } else {
             displayDeviceid.append(SharedPreferenceHandler.getStringValues(this, DEVICE_ID));
+            setVisibilityToElements(View.VISIBLE);
         }
+    }
 
-        if (!displayDeviceid.getText().toString().contains("Please set device ID")) {
-            cameraBtn.setVisibility(View.VISIBLE);
-        }
+    private void setVisibilityToElements(int view_type) {
+        cameraBtn.setVisibility(view_type);
+        ownMsg.setVisibility(view_type);
+        interMsg.setVisibility(view_type);
+        destMsg.setVisibility(view_type);
+        operationsTxt.setVisibility(view_type);
+        nearbyEnable.setVisibility(view_type);
+        nearbyDisable.setVisibility(view_type);
     }
 
     @OnClick(R.id.destMsg)
@@ -214,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
                 SharedPreferenceHandler.setStringValues(MainActivity.this, DEVICE_ID, deviceId);
                 displayDeviceid.setText("Device ID:" + deviceId);
                 if (!displayDeviceid.getText().toString().contains("Please set device ID")) {
-                    cameraBtn.setVisibility(View.VISIBLE);
+                    setVisibilityToElements(View.VISIBLE);
                 }
             }
         });
