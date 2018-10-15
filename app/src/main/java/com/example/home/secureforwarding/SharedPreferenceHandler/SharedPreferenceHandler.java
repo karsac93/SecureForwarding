@@ -29,10 +29,4 @@ public class SharedPreferenceHandler {
     public static int getIntValues(Context ctx, String key) {
         return getSharedPreferences(ctx).getInt(key, 0);
     }
-
-    public static byte[] getkeys(Context context, String key){
-        String value = getSharedPreferences(context).getString(key, "");
-        byte[] array = Base64.decode(value, Base64.DEFAULT);
-        return array;
-    }
 }

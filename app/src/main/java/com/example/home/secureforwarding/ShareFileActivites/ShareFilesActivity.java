@@ -13,6 +13,8 @@ import com.example.home.secureforwarding.Entities.Shares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.R;
 
+import org.apache.commons.lang3.SerializationUtils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -54,24 +56,12 @@ public class ShareFilesActivity extends AppCompatActivity implements SharesFragm
             if (!share.getShareType().contains(DataConstant.DATA_TYPE)) {
                 Intent intent = new Intent(this, ChooseEncryption.class);
                 Bundle bundle = new Bundle();
-                byte[] shareByte = serialize(share);
+                byte[] shareByte = SerializationUtils.serialize(share);
                 bundle.putByteArray(SEND_SHARE_KEY, shareByte);
                 intent.putExtras(bundle);
                 startActivity(intent);
             }
         }
 
-    }
-
-    public static byte[] serialize(Object obj) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ObjectOutputStream os = null;
-        try {
-            os = new ObjectOutputStream(out);
-            os.writeObject(obj);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return out.toByteArray();
     }
 }

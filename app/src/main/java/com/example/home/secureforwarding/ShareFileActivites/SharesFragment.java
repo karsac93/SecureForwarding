@@ -58,7 +58,7 @@ public class SharesFragment extends Fragment {
         msg_id = bundle.getString(CompleteFileActivity.MSG_ID);
         Log.d("=======", msg_id);
         AppDatabase database = AppDatabase.getAppDatabase(context);
-        if(msg_id != KeyConstant.INTER_TYPE)
+        if (msg_id != KeyConstant.INTER_TYPE)
             shares = database.dao().getShares(msg_id);
         else
             shares = database.dao().getInterShares(KeyConstant.INTER_TYPE);

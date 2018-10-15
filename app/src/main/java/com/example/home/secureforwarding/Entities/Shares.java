@@ -16,7 +16,7 @@ public class Shares implements Serializable {
     private String encryptedNodeNum;
 
     @NonNull
-    @ColumnInfo(name="dest_id")
+    @ColumnInfo(name = "dest_id")
     private String destId;
 
     @ColumnInfo(name = "file_id")
@@ -38,7 +38,7 @@ public class Shares implements Serializable {
     @ColumnInfo(name = "data", typeAffinity = ColumnInfo.BLOB)
     private byte[] data;
 
-    @ColumnInfo(name="cipher_data", typeAffinity = ColumnInfo.BLOB)
+    @ColumnInfo(name = "cipher_data", typeAffinity = ColumnInfo.BLOB)
     private byte[] cipher_data;
 
     public String getId() {

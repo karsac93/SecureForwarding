@@ -29,6 +29,16 @@ public class CreateDataShares {
 
     private static final String TAG = CreateDataShares.class.getSimpleName();
 
+    /**
+     * @param deviceID  - unique id of the device
+     * @param nodeType  - Owner, inter or destination
+     * @param database  - instance of the database
+     * @param fileByte  - total file as byte[]
+     * @param aesKey    - aes key generated for this msg
+     * @param destId    - dest id to which data shares need to be sent
+     * @param dataNum   - number of original data shares
+     * @param parityNum - number of parity data shares
+     */
     public CreateDataShares(String deviceID, String nodeType, AppDatabase database, byte[] fileByte, byte[] aesKey, String destId, int dataNum, int parityNum) {
         this.deviceID = deviceID;
         this.nodeType = nodeType;
@@ -41,7 +51,14 @@ public class CreateDataShares {
         TOTAL_SHARDS = DATA_SHARDS + PARITY_SHARDS;
     }
 
-    public byte[] generateDataShares(){
+    /**
+     * Method which is responsible to generate data shares
+     *
+     * @return
+     */
+    public byte[] generateDataShares() {
+
+        // original data is encrypted with aes key
         byte[] encodedVal = new AEScrypto().Encrypt(aesKey, fileByte);
         Log.d(TAG, "Encrypted block length:" + encodedVal.length);
         int fileSize = encodedVal.length;
@@ -68,11 +85,13 @@ public class CreateDataShares {
             System.arraycopy(allBytes, i * shardSize, shards[i], 0, shardSize);
         }
 
+        // Both data and parity are sent as argument to get the end result
         ReedSolomon reedSolomon = ReedSolomon.create(DATA_SHARDS, PARITY_SHARDS);
         reedSolomon.encodeParity(shards, 0, shardSize);
 
+        //data shares are updated in the database
         Shares shares = null;
-        for(int i=0; i<shards.length; i++) {
+        for (int i = 0; i < shards.length; i++) {
             signature = SingletoneECPRE.getInstance().SignMessage(shards[i], pvt_key);
             shares = new Shares(deviceID, i, KeyConstant.OWNER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
                     null, shards[i], destId);

@@ -12,6 +12,7 @@ import com.example.home.secureforwarding.Entities.Shares;
 @Database(version = 1, entities = {CompleteFiles.class, KeyStore.class, Shares.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase INSTANCE;
+
     abstract public DatabaseInterface dao();
 
     public static AppDatabase getAppDatabase(Context context) {

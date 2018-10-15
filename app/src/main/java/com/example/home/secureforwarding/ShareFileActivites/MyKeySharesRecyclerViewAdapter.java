@@ -36,7 +36,7 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.shareFile = mValues.get(position);
-        if(holder.shareFile.getShareType().contains(DataConstant.DATA_TYPE))
+        if (holder.shareFile.getShareType().contains(DataConstant.DATA_TYPE))
             holder.encryptedNum.setVisibility(View.GONE);
         else
             holder.encryptedNum.setVisibility(View.VISIBLE);
@@ -46,18 +46,18 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
         holder.dest_id.setText("Destination id: " + holder.shareFile.getDestId());
 
         String value = "sent";
-        if(holder.shareFile.getStatus() == 0)
+        if (holder.shareFile.getStatus() == 0)
             value = "Not sent";
         holder.status.setText("Status: " + value);
 
         String senderInformation = "null";
-        if(holder.shareFile.getSenderInfo() != null)
+        if (holder.shareFile.getSenderInfo() != null)
             senderInformation = holder.shareFile.getSenderInfo();
 
         holder.senderInfo.setText("This file sent to: " + senderInformation);
 
         String encryptedNum = "Proxy key not generated";
-        if(holder.shareFile.getEncryptedNodeNum() != null && holder.shareFile.getEncryptedNodeNum().length() != 0)
+        if (holder.shareFile.getEncryptedNodeNum() != null && holder.shareFile.getEncryptedNodeNum().length() != 0)
             encryptedNum = holder.shareFile.getEncryptedNodeNum();
         holder.encryptedNum.setText("Proxy key generated with: " + encryptedNum);
 

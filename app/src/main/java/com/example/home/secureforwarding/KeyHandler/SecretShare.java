@@ -10,19 +10,16 @@ public class SecretShare {
     private byte[] signature;
     public boolean isVerified;
 
-    public SecretShare(int number, BigInteger share)
-    {
+    public SecretShare(int number, BigInteger share) {
         this.number = number;
         this.share = share;
     }
 
-    public int getNumber()
-    {
+    public int getNumber() {
         return number;
     }
 
-    public BigInteger getShare()
-    {
+    public BigInteger getShare() {
         return share;
     }
 

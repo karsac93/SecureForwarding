@@ -21,6 +21,7 @@ import com.example.home.secureforwarding.Entities.KeyStore;
 import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.CreateKeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
+import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import java.io.File;
@@ -66,6 +67,9 @@ public class DetailActivity extends AppCompatActivity {
 
     int dataNum, parityNum;
 
+    /**
+     * An observer object is created and attached to observable to compute CPU intensive tasks
+     */
     Observer<File> shareObserver = new Observer<File>() {
         @Override
         public void onSubscribe(Disposable d) {
@@ -75,7 +79,6 @@ public class DetailActivity extends AppCompatActivity {
 
         @Override
         public void onNext(File value) {
-            Log.d(TAG, "OOH OOH, I'm here" + value.getName());
             String dest = destId.getText().toString().trim();
             AEScrypto aesCrypto = new AEScrypto();
             byte[] key = aesCrypto.GenerateKey();
@@ -83,7 +86,7 @@ public class DetailActivity extends AppCompatActivity {
             try {
                 FileInputStream fileInputStream = new FileInputStream(value);
                 fileInputStream.read(fileByte);
-                byte[] pvtKey = SharedPreferenceHandler.getkeys(DetailActivity.this, MainActivity.PVT_KEY);
+                byte[] pvtKey = SingletoneECPRE.getInstance().pvtKey;
                 CreateDataShares createDataShares = new CreateDataShares(value.getName(), KeyConstant.OWNER_TYPE, database, fileByte, key, dest, dataNum, parityNum);
                 byte[] sign = createDataShares.generateDataShares();
                 CreateKeyShares createKeyShares = new CreateKeyShares(value.getName(), KeyConstant.OWNER_TYPE, database, key, sign, dest);
@@ -135,6 +138,10 @@ public class DetailActivity extends AppCompatActivity {
         imageView.setImageBitmap(bitmap);
     }
 
+    /**
+     * Based on various parameters like static and dynamic, appropriate key and date share are generated
+     * using RxAndroid multi threading feature
+     */
     @OnClick(R.id.createsharebtn)
     public void createKeyDataShares() {
         shareBtn.setEnabled(false);
@@ -143,13 +150,12 @@ public class DetailActivity extends AppCompatActivity {
             Toast.makeText(DetailActivity.this, "Please enter the destID", Toast.LENGTH_SHORT).show();
         else {
             int id = radioGroup.getCheckedRadioButtonId();
-            if(id == staticButton.getId()){
+            if (id == staticButton.getId()) {
                 dataNum = 4;
                 parityNum = 4;
-            }
-            else{
+            } else {
                 int dataShardSize = (int) (file.length() / 512000);
-                Log.d(TAG, "Number of data shards in dynamic:" + dataShardSize + " File length:" + file.length()) ;
+                Log.d(TAG, "Number of data shards in dynamic:" + dataShardSize + " File length:" + file.length());
                 dataNum = dataShardSize + 1;
                 parityNum = dataNum;
             }

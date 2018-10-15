@@ -23,17 +23,25 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileActivity;
+import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
+import com.example.home.secureforwarding.Entities.Shares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.ShareFileActivites.ShareFilesActivity;
 import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.Arrays;
+import java.io.ObjectInputStream;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.reactivex.Single;
+import it.unisa.dia.gas.jpbc.Field;
+import it.unisa.dia.gas.jpbc.Pairing;
+import it.unisa.dia.gas.jpbc.PairingPreProcessing;
+import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -45,10 +53,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String IMG_NUM_KEY = "image_num";
     private String deviceId;
     public static final String INTENT_IMG = "imgFile";
-    public static final String PUB_KEY = "pubkey";
-    public static final String PVT_KEY = "prvtkey";
-    public static final String INV_KEY = "invkey";
 
+    /**
+     * File - create a file before taking picture and save it for performing data sharing
+     */
     File file;
     Intent intent;
 
@@ -98,8 +106,21 @@ public class MainActivity extends AppCompatActivity {
             displayDeviceid.append(SharedPreferenceHandler.getStringValues(this, DEVICE_ID));
             setVisibilityToElements(View.VISIBLE);
         }
+        SingletoneECPRE ecpre = SingletoneECPRE.getInstance();
+        if (SharedPreferenceHandler.getStringValues(this, SingletoneECPRE.PREF_EC_PARAM).length() == 0) {
+            ecpre = SingletoneECPRE.getInstance();
+            ecpre.initialize(true, this);
+        } else {
+            ecpre.initialize(false, this);
+        }
+
     }
 
+    /**
+     * Once the device id is set, visibility of other elements are modified
+     *
+     * @param view_type
+     */
     private void setVisibilityToElements(int view_type) {
         cameraBtn.setVisibility(view_type);
         ownMsg.setVisibility(view_type);
@@ -110,15 +131,21 @@ public class MainActivity extends AppCompatActivity {
         nearbyDisable.setVisibility(view_type);
     }
 
+    /**
+     * All retrieved msgs, for which the device is destination is displayed
+     */
     @OnClick(R.id.destMsg)
-    public void showDestImage(){
+    public void showDestImage() {
         intent = new Intent(this, CompleteFileActivity.class);
         intent.putExtra(CompleteFileActivity.DISPLAY_INFO, KeyConstant.DEST_TYPE);
         startActivity(intent);
     }
 
+    /**
+     * ALl own msgs, along with their key and data fragments are displayed
+     */
     @OnClick(R.id.ownMsg)
-    public void showOwnImages(){
+    public void showOwnImages() {
         intent = new Intent(this, CompleteFileActivity.class);
         intent.putExtra(CompleteFileActivity.DISPLAY_INFO, KeyConstant.OWNER_TYPE);
         startActivity(intent);
@@ -129,6 +156,10 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    /**
+     * Permission to access camera is checked and camera intent is called if premission is given
+     * else, request permission and then take pic and save it
+     */
     @OnClick(R.id.cameraBtn)
     public void checkPermission() {
         if (hasPermissions(this, PERMISSIONS) == false) {
@@ -141,13 +172,19 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Shows all the intermediate msg received from other devices
+     */
     @OnClick(R.id.intermsg)
-    public void showInterMsgs(){
+    public void showInterMsgs() {
         intent = new Intent(this, ShareFilesActivity.class);
         intent.putExtra(ShareFilesActivity.INTENT_ACTION, ShareFilesActivity.INTER_ACTION);
         startActivity(intent);
     }
 
+    /**
+     * Get the URI from already created file for this image and starts the camera intent
+     */
     private void saveImage() {
         Uri imageUri = Uri.fromFile(file);
         Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
@@ -157,19 +194,20 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, final Intent data) {
-        if(requestCode == CAMERA_REQUEST){
-            if(resultCode != RESULT_CANCELED){
+        if (requestCode == CAMERA_REQUEST) {
+            if (resultCode != RESULT_CANCELED) {
                 Intent intent = new Intent(MainActivity.this, DetailActivity.class);
                 intent.putExtra(INTENT_IMG, file);
                 startActivity(intent);
-            }
-            else{
+            } else {
                 file.delete();
             }
         }
     }
 
-
+    /**
+     * Creates the file for camera intent to save it, which will be used later for fragmentation too
+     */
     private void createFile() {
         String root = Environment.getExternalStorageDirectory().toString();
         int fileNum = SharedPreferenceHandler.getIntValues(this, IMG_NUM_KEY);
@@ -184,6 +222,13 @@ public class MainActivity extends AppCompatActivity {
             file.delete();
     }
 
+    /**
+     * Checks permission to modify SD card and access camera
+     *
+     * @param context
+     * @param permissions
+     * @return
+     */
     public static boolean hasPermissions(Context context, String... permissions) {
         if (context != null && permissions != null) {
             reqBool = true;
@@ -218,18 +263,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Device id is requested from the user
+     */
     @OnClick(R.id.deviceId)
     public void requestDeviceID() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter Device ID");
-
-        // Set up the input
         final EditText input = new EditText(this);
-        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
-
-        // Set up the buttons
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -250,19 +293,4 @@ public class MainActivity extends AppCompatActivity {
         });
         builder.show();
     }
-
-    public String getRealPathFromURI(Context context, Uri contentUri) {
-        Cursor cursor = null;
-        try {
-            cursor = context.getContentResolver().query(contentUri, null, null, null, null);
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.ImageColumns.DATA);
-            cursor.moveToFirst();
-            return cursor.getString(column_index);
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-    }
-
 }

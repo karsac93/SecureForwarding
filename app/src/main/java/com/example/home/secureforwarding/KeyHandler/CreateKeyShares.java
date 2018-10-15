@@ -23,6 +23,14 @@ public class CreateKeyShares {
 
     private static final String TAG = CreateKeyShares.class.getSimpleName();
 
+    /**
+     * @param device_msg_id - device + msg id
+     * @param nodeType      - Type refers to owner, Inter or destination
+     * @param database      - instance of database
+     * @param key           - AES key
+     * @param sign          - A sign byte[] of one of the data fragment
+     * @param destId        - Destination id of this share
+     */
     public CreateKeyShares(String device_msg_id, String nodeType, AppDatabase database, byte[] key, byte[] sign, String destId) {
         this.device_msg_id = device_msg_id;
         this.nodeType = nodeType;
@@ -32,11 +40,14 @@ public class CreateKeyShares {
         this.destId = destId;
     }
 
+    /**
+     * Responside for creating the shares
+     */
     public void generateKeyShares() {
         AEScrypto aesCrypto = new AEScrypto();
         Log.d(TAG, "---------Key---------:" + new String(key));
 
-
+        // Based on K, the size of hidden msg is calculated
         RSecretShare rss = new RSecretShare(KeyConstant.keyShareK, KeyConstant.keyShareN);
         BigInteger[] hiddenInfo = new BigInteger[KeyConstant.keyShareK - 2];
 
@@ -64,6 +75,7 @@ public class CreateKeyShares {
             keyShares.add(fullKeyShare);
         }
 
+        //Merkle hash tree is calculated and relevant information is added with each key share
         hashTree.CalculateHash(hashTree.root);
         for (int i = 0; i < keyShares.size(); i++) {
             MerkleHashTree.TreeNode node = hashTree.leafNodes.get(i);
@@ -73,6 +85,7 @@ public class CreateKeyShares {
             }
         }
 
+        //each share is encrypted using EC and updated in the database
         Shares dbShare;
         for (int i = 0; i < shares.length; i++) {
             byte[] cipher_data = SingletoneECPRE.getInstance().Encryption(keyShares.get(i));

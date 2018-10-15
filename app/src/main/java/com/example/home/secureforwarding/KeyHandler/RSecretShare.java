@@ -9,7 +9,7 @@ public class RSecretShare {
 
     public RSecretShare(int keyShareK, int keyShareN) {
         this.k = keyShareK;
-        this.n= keyShareN;
+        this.n = keyShareN;
     }
 
     //this prime is greater than the number 2^384
@@ -18,34 +18,33 @@ public class RSecretShare {
     private final static BigInteger prime = new BigInteger("115792089237316195423570985008687907853269984665640564039457584007913129640233");
 
     private SecretShare[] shares;
-    private BigInteger [] constructedInfo;
+    private BigInteger[] constructedInfo;
 
 
-    public SecretShare[] CreateShare(BigInteger key, BigInteger[] info)
-    {
+    public SecretShare[] CreateShare(BigInteger key, BigInteger[] info) {
         //initialize
         shares = new SecretShare[n];
 
-        BigInteger[][] yPoint = new BigInteger[k-1][k-1];
+        BigInteger[][] yPoint = new BigInteger[k - 1][k - 1];
         yPoint[0][0] = new BigInteger(KeyConstant.keyByteLenght * 8, 1, new Random());
 
         //create shares with hidden info
-        for(int i=0; i<info.length; i++){
-            int[] x = new int[i+2];
-            BigInteger[] y = new BigInteger[i+2];
+        for (int i = 0; i < info.length; i++) {
+            int[] x = new int[i + 2];
+            BigInteger[] y = new BigInteger[i + 2];
 
             x[0] = 0;
             y[0] = info[i];
 
-            int j=0;
+            int j = 0;
 
-            for(; j<=i; j++){
-                x[j+1] = j+1;
-                y[j+1] = yPoint[i][j];
+            for (; j <= i; j++) {
+                x[j + 1] = j + 1;
+                y[j + 1] = yPoint[i][j];
             }
 
-            for(int m=0; m<=i+1; m++, j++){
-                yPoint[i+1][m] = Interpolation(x, y, j+1);
+            for (int m = 0; m <= i + 1; m++, j++) {
+                yPoint[i + 1][m] = Interpolation(x, y, j + 1);
             }
         }
 
@@ -57,31 +56,31 @@ public class RSecretShare {
             x[0] = 0;
             y[0] = key;
 
-            for(int i=0; i<k-1; i++){
-                x[i+1] = i+1;
-                y[i+1] = yPoint[k-2][i];
+            for (int i = 0; i < k - 1; i++) {
+                x[i + 1] = i + 1;
+                y[i + 1] = yPoint[k - 2][i];
             }
 
-            for(int m=0; m<n; m++){
-                shares[m] = new SecretShare(m+k, Interpolation(x, y, m+k));
+            for (int m = 0; m < n; m++) {
+                shares[m] = new SecretShare(m + k, Interpolation(x, y, m + k));
             }
         }
         return shares;
     }
 
-    public BigInteger[] ReconstructShare(SecretShare[] rShares){
+    public BigInteger[] ReconstructShare(SecretShare[] rShares) {
 
         //initialize
-        constructedInfo = new BigInteger[k-1];
-        BigInteger[][] yPoint = new BigInteger[k-1][k-1];
+        constructedInfo = new BigInteger[k - 1];
+        BigInteger[][] yPoint = new BigInteger[k - 1][k - 1];
 
-        if(rShares.length >= k){
+        if (rShares.length >= k) {
             //get key
             {
                 int[] x = new int[k];
                 BigInteger[] y = new BigInteger[k];
 
-                for(int i=0; i<k; i++){
+                for (int i = 0; i < k; i++) {
                     x[i] = rShares[i].getNumber();
                     y[i] = rShares[i].getShare();
                 }
@@ -89,25 +88,25 @@ public class RSecretShare {
                 BigInteger rKey = Interpolation(x, y, 0);
                 constructedInfo[0] = rKey;
 
-                for(int j=0; j<k-1; j++){
-                    yPoint[k-2][j] = Interpolation(x, y, j+1);
+                for (int j = 0; j < k - 1; j++) {
+                    yPoint[k - 2][j] = Interpolation(x, y, j + 1);
                 }
             }
             //get other informations
-            for(int i=k-2; i>=1; i--){
+            for (int i = k - 2; i >= 1; i--) {
 
-                int[] x = new int[i+1];
-                BigInteger[] y = new BigInteger[i+1];
+                int[] x = new int[i + 1];
+                BigInteger[] y = new BigInteger[i + 1];
 
-                for(int j=1; j<=i+1; j++){
-                    x[j-1] = i+j;
-                    y[j-1] = yPoint[i][j-1];
+                for (int j = 1; j <= i + 1; j++) {
+                    x[j - 1] = i + j;
+                    y[j - 1] = yPoint[i][j - 1];
                 }
 
                 constructedInfo[i] = Interpolation(x, y, 0);
 
-                for(int m=0; m<i; m++){
-                    yPoint[i-1][m] = Interpolation(x, y, m+1);
+                for (int m = 0; m < i; m++) {
+                    yPoint[i - 1][m] = Interpolation(x, y, m + 1);
                 }
             }
         }
@@ -119,16 +118,13 @@ public class RSecretShare {
         int l = x.length;
         BigInteger ordinate = BigInteger.ZERO;
 
-        for(int i=0; i<l; i++)
-        {
+        for (int i = 0; i < l; i++) {
             BigInteger numerator = BigInteger.ONE;
             BigInteger denominator = BigInteger.ONE;
-            for(int j=0; j<l; j++)
-            {
-                if(j!=i)
-                {
-                    numerator = numerator.multiply(BigInteger.valueOf(abscissa-x[j])).mod(prime);
-                    denominator = denominator.multiply(BigInteger.valueOf(x[i]-x[j])).mod(prime);
+            for (int j = 0; j < l; j++) {
+                if (j != i) {
+                    numerator = numerator.multiply(BigInteger.valueOf(abscissa - x[j])).mod(prime);
+                    denominator = denominator.multiply(BigInteger.valueOf(x[i] - x[j])).mod(prime);
                 }
             }
             BigInteger yVal = y[i].multiply(numerator).multiply(modInverse(denominator, prime));
@@ -138,23 +134,20 @@ public class RSecretShare {
         return ordinate;
     }
 
-    private BigInteger[] gcdD(BigInteger a, BigInteger b)
-    {
+    private BigInteger[] gcdD(BigInteger a, BigInteger b) {
         if (b.compareTo(BigInteger.ZERO) == 0)
-            return new BigInteger[] {a, BigInteger.ONE, BigInteger.ZERO};
-        else
-        {
+            return new BigInteger[]{a, BigInteger.ONE, BigInteger.ZERO};
+        else {
             BigInteger n = a.divide(b);
             BigInteger c = a.mod(b);
             BigInteger[] r = gcdD(b, c);
-            return new BigInteger[] {r[0], r[2], r[1].subtract(r[2].multiply(n))};
+            return new BigInteger[]{r[0], r[2], r[1].subtract(r[2].multiply(n))};
         }
     }
 
-    private BigInteger modInverse(BigInteger k, BigInteger prime)
-    {
+    private BigInteger modInverse(BigInteger k, BigInteger prime) {
         k = k.mod(prime);
-        BigInteger r = (k.compareTo(BigInteger.ZERO) == -1) ? (gcdD(prime, k.negate())[2]).negate() : gcdD(prime,k)[2];
+        BigInteger r = (k.compareTo(BigInteger.ZERO) == -1) ? (gcdD(prime, k.negate())[2]).negate() : gcdD(prime, k)[2];
         return prime.add(r).mod(prime);
     }
 }

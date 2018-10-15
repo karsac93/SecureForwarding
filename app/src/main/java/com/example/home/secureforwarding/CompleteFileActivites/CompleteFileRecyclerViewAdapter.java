@@ -37,10 +37,10 @@ public class CompleteFileRecyclerViewAdapter extends RecyclerView.Adapter<Comple
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.completeFiles =  mValues.get(position);
+        holder.completeFiles = mValues.get(position);
         Log.d("ImageAdapter", holder.completeFiles.toString());
         File file = new File(holder.completeFiles.getFilePath());
-        if(file.exists()){
+        if (file.exists()) {
             Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
             holder.imageView.setImageBitmap(bitmap);
             holder.fileName.setText("File name:" + file.getName());

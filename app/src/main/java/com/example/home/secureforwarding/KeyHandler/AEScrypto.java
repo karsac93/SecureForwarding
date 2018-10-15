@@ -12,17 +12,16 @@ public class AEScrypto {
     public final static int hashLenght = 16;
     private static byte[] initVector;
 
-    public AEScrypto(){
+    public AEScrypto() {
         GenerateInitVector();
     }
 
-    public byte[] GenerateKey()
-    {
+    public byte[] GenerateKey() {
         String CHAR_LIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-        int RANDOM_STRING_LENGTH = bitLenght/8;
+        int RANDOM_STRING_LENGTH = bitLenght / 8;
 
         StringBuffer randStr = new StringBuffer();
-        for(int i=0; i<RANDOM_STRING_LENGTH; i++){
+        for (int i = 0; i < RANDOM_STRING_LENGTH; i++) {
             int randomInt = 0;
             Random randomGenerator = new Random();
             randomInt = randomGenerator.nextInt(CHAR_LIST.length());
@@ -33,21 +32,18 @@ public class AEScrypto {
         return String.valueOf(randStr).getBytes();
     }
 
-    public void GenerateInitVector()
-    {
-        initVector = new byte[]{'w','a','d','f','g','b','j','k','z','c','d','f','g','h','j','k'};
+    public void GenerateInitVector() {
+        initVector = new byte[]{'w', 'a', 'd', 'f', 'g', 'b', 'j', 'k', 'z', 'c', 'd', 'f', 'g', 'h', 'j', 'k'};
     }
 
-    public byte[] Hash(byte[] value)
-    {
+    public byte[] Hash(byte[] value) {
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("MD5");
             byte[] bytesOfMessage = value;
             final byte[] resultByte = messageDigest.digest(bytesOfMessage);
             //System.out.println("Hash Length: " + resultByte.length);
             return resultByte;
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
             System.out.println("Hash Exception:");
         }
@@ -55,10 +51,8 @@ public class AEScrypto {
         return null;
     }
 
-    public byte[] Encrypt(byte[] key, byte[] value)
-    {
-        try
-        {
+    public byte[] Encrypt(byte[] key, byte[] value) {
+        try {
             IvParameterSpec iv = new IvParameterSpec(initVector);
             SecretKeySpec skeySpec = new SecretKeySpec(key, "AES");
 
@@ -68,8 +62,7 @@ public class AEScrypto {
             byte[] encrypted = cipher.doFinal(value);
             //System.out.println("Encrypted Length: " + encrypted.length);
             return encrypted;
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
             System.out.println("Encryption Exception:");
         }
@@ -77,10 +70,8 @@ public class AEScrypto {
         return null;
     }
 
-    public byte[] Decrypt(byte[] key, byte[] encrypted)
-    {
-        try
-        {
+    public byte[] Decrypt(byte[] key, byte[] encrypted) {
+        try {
             IvParameterSpec iv = new IvParameterSpec(initVector);
             SecretKeySpec skeySpec = new SecretKeySpec(key, "AES");
 
@@ -90,8 +81,7 @@ public class AEScrypto {
             byte[] decrypted = cipher.doFinal(encrypted);
             //System.out.println("Decrypted Length: " + original.length);
             return decrypted;
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
             System.out.println("Decryption Exception:");
         }

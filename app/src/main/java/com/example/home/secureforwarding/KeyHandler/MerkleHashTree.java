@@ -26,7 +26,7 @@ public class MerkleHashTree {
         this.numOfLeaf = KeyConstant.keyShareN;
 
         this.root = new TreeNode(null, null);
-        this.BuildTree((int) (Math.log(numOfLeaf)/Math.log(2)), this.root);
+        this.BuildTree((int) (Math.log(numOfLeaf) / Math.log(2)), this.root);
     }
 
     public void BuildTree(int height, TreeNode parent) {
@@ -37,18 +37,17 @@ public class MerkleHashTree {
         parent.children.add(childLeft);
         parent.children.add(childRight);
 
-        if(height == 1) {
+        if (height == 1) {
             leafNodes.add(childLeft);
             leafNodes.add(childRight);
-        }
-        else {
-            BuildTree(height-1, childLeft);
-            BuildTree(height-1, childRight);
+        } else {
+            BuildTree(height - 1, childLeft);
+            BuildTree(height - 1, childRight);
         }
     }
 
     public byte[] CalculateHash(TreeNode parent) {
-        if(parent.children.size() > 0) {
+        if (parent.children.size() > 0) {
             byte[] hashLeft = CalculateHash(parent.children.get(0));
             byte[] hashRight = CalculateHash(parent.children.get(1));
 
@@ -60,8 +59,7 @@ public class MerkleHashTree {
             hash = new AEScrypto().Hash(concatedHash);
             System.arraycopy(hash, 0, parent.hash, 0, AEScrypto.hashLenght);
             return hash;
-        }
-        else {
+        } else {
             return parent.hash;
         }
     }
