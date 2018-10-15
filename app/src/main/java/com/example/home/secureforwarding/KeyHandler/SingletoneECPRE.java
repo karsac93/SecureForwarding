@@ -24,7 +24,6 @@ public class SingletoneECPRE {
     public static final String PREF_EC_PARAM = "ec_param";
     public static final String PREF_E_G = "e_g";
     public static final String PREF_E_K = "e_k";
-    public static final String PREF_E_ZK = "e_zk";
     public static final String PREF_PUB_KEY = "pub_key";
     public static final String PREF_PVT_KEY = "pvt_key";
     public static final String PREF_INV_KEY = "inv_key";

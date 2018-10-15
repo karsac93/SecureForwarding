@@ -23,6 +23,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileActivity;
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
@@ -215,12 +216,15 @@ public class MainActivity extends AppCompatActivity {
 
     @OnClick(R.id.enable)
     public void startGoogleNearbyService(){
+        Toast.makeText(this, "Searching for nearby devices!", Toast.LENGTH_SHORT).show();
         intent = new Intent(this, NearbyService.class);
         startService(intent);
     }
 
     @OnClick(R.id.disable)
     public void stopGoogleNearbyService(){
+        Toast.makeText(this, "Device no longer connects or visible to other device!",
+                Toast.LENGTH_SHORT).show();
         intent = new Intent(this, NearbyService.class);
         stopService(intent);
     }

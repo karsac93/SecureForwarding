@@ -42,6 +42,9 @@ public interface DatabaseInterface {
     @Query("select public_key from keystore where id=:deviceId")
     byte[] getPublicKey(String deviceId);
 
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    void insertKeyStore(KeyStore keyStore);
+
     @Update(onConflict = OnConflictStrategy.REPLACE)
     void updateKeyShare(Shares shares);
 
