@@ -89,6 +89,8 @@ public class CreateDataShares {
         ReedSolomon reedSolomon = ReedSolomon.create(DATA_SHARDS, PARITY_SHARDS);
         reedSolomon.encodeParity(shards, 0, shardSize);
 
+        pvt_key = SingletoneECPRE.getInstance().pvtKey;
+
         //data shares are updated in the database
         Shares shares = null;
         for (int i = 0; i < shards.length; i++) {

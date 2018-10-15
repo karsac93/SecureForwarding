@@ -1,5 +1,7 @@
 package com.example.home.secureforwarding;
 
+import android.Manifest;
+import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -25,6 +27,7 @@ import android.widget.TextView;
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileActivity;
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
 import com.example.home.secureforwarding.Entities.Shares;
+import com.example.home.secureforwarding.GoogleNearbySupports.NearbyService;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.ShareFileActivites.ShareFilesActivity;
@@ -46,7 +49,7 @@ import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final String DEVICE_ID = "deviceID";
+    public static final String DEVICE_ID = "deviceID";
     private static final int REQ_PERMISSION = 1;
     public static final int CAMERA_REQUEST = 2;
     private static boolean reqBool = false;
@@ -62,7 +65,8 @@ public class MainActivity extends AppCompatActivity {
 
     String[] PERMISSIONS = {
             android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            android.Manifest.permission.CAMERA
+            android.Manifest.permission.CAMERA,
+            Manifest.permission.ACCESS_COARSE_LOCATION
     };
 
     @BindView(R.id.deviceId)
@@ -203,6 +207,22 @@ public class MainActivity extends AppCompatActivity {
                 file.delete();
             }
         }
+    }
+
+    /**
+     * Start the Google Nearby Connections service
+     */
+
+    @OnClick(R.id.enable)
+    public void startGoogleNearbyService(){
+        intent = new Intent(this, NearbyService.class);
+        startService(intent);
+    }
+
+    @OnClick(R.id.disable)
+    public void stopGoogleNearbyService(){
+        intent = new Intent(this, NearbyService.class);
+        stopService(intent);
     }
 
     /**
