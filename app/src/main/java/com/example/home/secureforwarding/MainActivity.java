@@ -323,6 +323,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setHomeScreen(int val) {
         displayDeviceid.setText("Device ID: " + val);
+        deviceIdBtn.setVisibility(View.GONE);
         setVisibilityToElements(View.VISIBLE);
     }
 
