@@ -33,10 +33,20 @@ import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.ShareFileActivites.ShareFilesActivity;
 import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.ObjectInputStream;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -97,6 +107,9 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.disable)
     Button nearbyDisable;
 
+    @BindView(R.id.netMsg)
+    TextView internetMsg;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -109,16 +122,12 @@ public class MainActivity extends AppCompatActivity {
             setVisibilityToElements(View.GONE);
         } else {
             displayDeviceid.append(SharedPreferenceHandler.getStringValues(this, DEVICE_ID));
+            deviceIdBtn.setVisibility(View.GONE);
+            internetMsg.setVisibility(View.GONE);
             setVisibilityToElements(View.VISIBLE);
         }
-        SingletoneECPRE ecpre = SingletoneECPRE.getInstance();
-        if (SharedPreferenceHandler.getStringValues(this, SingletoneECPRE.PREF_EC_PARAM).length() == 0) {
-            ecpre = SingletoneECPRE.getInstance();
-            ecpre.initialize(true, this);
-        } else {
-            ecpre.initialize(false, this);
-        }
-
+        InitializeEcpr initializeEcpr = new InitializeEcpr(this);
+        initializeEcpr.run();
     }
 
     /**
@@ -215,14 +224,14 @@ public class MainActivity extends AppCompatActivity {
      */
 
     @OnClick(R.id.enable)
-    public void startGoogleNearbyService(){
+    public void startGoogleNearbyService() {
         Toast.makeText(this, "Searching for nearby devices!", Toast.LENGTH_SHORT).show();
         intent = new Intent(this, NearbyService.class);
         startService(intent);
     }
 
     @OnClick(R.id.disable)
-    public void stopGoogleNearbyService(){
+    public void stopGoogleNearbyService() {
         Toast.makeText(this, "Device no longer connects or visible to other device!",
                 Toast.LENGTH_SHORT).show();
         intent = new Intent(this, NearbyService.class);
@@ -292,29 +301,47 @@ public class MainActivity extends AppCompatActivity {
      */
     @OnClick(R.id.deviceId)
     public void requestDeviceID() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Enter Device ID");
-        final EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-        builder.setView(input);
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        final DatabaseReference reference = database.getReference("counter");
+        final int[] val = new int[1];
+        reference.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                deviceId = input.getText().toString();
-                Log.d(TAG, "Device id entered:" + deviceId);
-                SharedPreferenceHandler.setStringValues(MainActivity.this, DEVICE_ID, deviceId);
-                displayDeviceid.setText("Device ID:" + deviceId);
-                if (!displayDeviceid.getText().toString().contains("Please set device ID")) {
-                    setVisibilityToElements(View.VISIBLE);
-                }
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                val[0] = Integer.parseInt(dataSnapshot.getValue().toString());
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
             }
         });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
+        reference.setValue(val[0] + 1);
+        database.goOffline();
+        SharedPreferenceHandler.setStringValues(MainActivity.this, DEVICE_ID, String.valueOf(val[0]));
+        setHomeScreen(val[0]);
+    }
+
+    private void setHomeScreen(int val) {
+        displayDeviceid.setText("Device ID: " + val);
+        setVisibilityToElements(View.VISIBLE);
+    }
+
+    class InitializeEcpr implements Runnable {
+        Context context;
+
+        public InitializeEcpr(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        public void run() {
+            SingletoneECPRE ecpre = SingletoneECPRE.getInstance();
+            if (SharedPreferenceHandler.getStringValues(context, SingletoneECPRE.PREF_EC_PARAM).length() == 0) {
+                ecpre = SingletoneECPRE.getInstance();
+                ecpre.initialize(true, context);
+            } else {
+                ecpre.initialize(false, context);
             }
-        });
-        builder.show();
+        }
     }
 }
