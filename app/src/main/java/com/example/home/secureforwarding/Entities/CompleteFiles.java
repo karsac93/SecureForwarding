@@ -5,8 +5,10 @@ import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
 import android.support.annotation.NonNull;
 
+import java.io.Serializable;
+
 @Entity
-public class CompleteFiles {
+public class CompleteFiles implements Serializable {
     @PrimaryKey
     @ColumnInfo(name = "id")
     @NonNull
@@ -55,6 +57,13 @@ public class CompleteFiles {
 
     public void setDestId(@NonNull String destId) {
         this.destId = destId;
+    }
+
+    public CompleteFiles(@NonNull String id, @NonNull String type, @NonNull String destId, String filePath) {
+        this.id = id;
+        this.type = type;
+        this.destId = destId;
+        this.filePath = filePath;
     }
 
     @Override

@@ -2,18 +2,16 @@ package com.example.home.secureforwarding.Entities;
 
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.Ignore;
 import android.support.annotation.NonNull;
 
 import java.io.Serializable;
 
-@Entity(primaryKeys = {"id", "file_id", "share_type"})
-public class Shares implements Serializable {
-    @ColumnInfo(name = "id")
+@Entity(primaryKeys = {"msg_id", "file_id"})
+public class DataShares implements Serializable {
+    @ColumnInfo(name = "msg_id")
     @NonNull
-    private String id;
-
-    @ColumnInfo(name = "encrypted_node_num")
-    private String encryptedNodeNum;
+    private String msg_id;
 
     @NonNull
     @ColumnInfo(name = "dest_id")
@@ -38,15 +36,22 @@ public class Shares implements Serializable {
     @ColumnInfo(name = "data", typeAffinity = ColumnInfo.BLOB)
     private byte[] data;
 
-    @ColumnInfo(name = "cipher_data", typeAffinity = ColumnInfo.BLOB)
-    private byte[] cipher_data;
-
-    public String getId() {
-        return id;
+    @NonNull
+    public String getMsg_id() {
+        return msg_id;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setMsg_id(@NonNull String msg_id) {
+        this.msg_id = msg_id;
+    }
+
+    @NonNull
+    public String getDestId() {
+        return destId;
+    }
+
+    public void setDestId(@NonNull String destId) {
+        this.destId = destId;
     }
 
     public int getFileId() {
@@ -65,11 +70,12 @@ public class Shares implements Serializable {
         this.type = type;
     }
 
+    @NonNull
     public String getShareType() {
         return shareType;
     }
 
-    public void setShareType(String shareType) {
+    public void setShareType(@NonNull String shareType) {
         this.shareType = shareType;
     }
 
@@ -97,39 +103,19 @@ public class Shares implements Serializable {
         this.data = data;
     }
 
-    public String getEncryptedNodeNum() {
-        return encryptedNodeNum;
+    public DataShares() {
+
     }
 
-    public void setEncryptedNodeNum(String encryptedNodeNum) {
-        this.encryptedNodeNum = encryptedNodeNum;
-    }
-
-    public byte[] getCipher_data() {
-        return cipher_data;
-    }
-
-    public void setCipher_data(byte[] cipher_data) {
-        this.cipher_data = cipher_data;
-    }
-
-    @NonNull
-    public String getDestId() {
-        return destId;
-    }
-
-    public void setDestId(@NonNull String destId) {
+    @Ignore
+    public DataShares(@NonNull String msg_id, @NonNull String destId, int fileId, String type, @NonNull String shareType, int status, String senderInfo, byte[] data) {
+        this.msg_id = msg_id;
         this.destId = destId;
-    }
-
-    public Shares(String id, int fileId, String type, String shareType, int status, String senderInfo, byte[] data, String destId) {
-        this.id = id;
         this.fileId = fileId;
         this.type = type;
         this.shareType = shareType;
         this.status = status;
         this.senderInfo = senderInfo;
         this.data = data;
-        this.destId = destId;
     }
 }

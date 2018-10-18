@@ -4,7 +4,7 @@ import android.util.Log;
 
 import com.backblaze.erasure.ReedSolomon;
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
-import com.example.home.secureforwarding.Entities.Shares;
+import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
@@ -92,11 +92,11 @@ public class CreateDataShares {
         pvt_key = SingletoneECPRE.getInstance().pvtKey;
 
         //data shares are updated in the database
-        Shares shares = null;
+        DataShares shares;
         for (int i = 0; i < shards.length; i++) {
             signature = SingletoneECPRE.getInstance().SignMessage(shards[i], pvt_key);
-            shares = new Shares(deviceID, i, KeyConstant.OWNER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
-                    null, shards[i], destId);
+            shares = new DataShares(deviceID, destId, i, KeyConstant.OWNER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
+                    null, shards[i]);
             database.dao().insertDataShares(shares);
         }
         return signature;

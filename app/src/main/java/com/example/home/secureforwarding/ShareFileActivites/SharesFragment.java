@@ -1,7 +1,6 @@
 package com.example.home.secureforwarding.ShareFileActivites;
 
 import android.content.Context;
-import android.nfc.Tag;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
@@ -14,10 +13,12 @@ import android.view.ViewGroup;
 
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileActivity;
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
-import com.example.home.secureforwarding.Entities.Shares;
+import com.example.home.secureforwarding.Entities.DataShares;
+import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,7 +36,7 @@ public class SharesFragment extends Fragment {
     private OnListKeyFragmentInteractionListener mListener;
     Context context;
     String msg_id;
-    List<Shares> shares;
+    List<DataShares> dataShares;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -58,11 +59,13 @@ public class SharesFragment extends Fragment {
         msg_id = bundle.getString(CompleteFileActivity.MSG_ID);
         Log.d("=======", msg_id);
         AppDatabase database = AppDatabase.getAppDatabase(context);
-        if (msg_id != KeyConstant.INTER_TYPE)
-            shares = database.dao().getShares(msg_id);
-        else
-            shares = database.dao().getInterShares(KeyConstant.INTER_TYPE);
-
+        if (msg_id != KeyConstant.INTER_TYPE) {
+            dataShares = database.dao().getDataShareForMsg(msg_id);
+            dataShares.addAll(database.dao().getKeyShareForMsg(msg_id));
+        } else {
+            dataShares = database.dao().getInterDataShares(KeyConstant.INTER_TYPE);
+            dataShares.addAll(database.dao().getKeyShareForMsg(KeyConstant.INTER_TYPE));
+        }
 
         // Set the adapter
         if (view instanceof RecyclerView) {
@@ -73,7 +76,7 @@ public class SharesFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new MyKeySharesRecyclerViewAdapter(shares, mListener));
+            recyclerView.setAdapter(new MyKeySharesRecyclerViewAdapter(dataShares, mListener));
         }
         return view;
     }
@@ -108,6 +111,6 @@ public class SharesFragment extends Fragment {
      */
     public interface OnListKeyFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onListFragmentInteraction(Shares share);
+        void onListFragmentInteraction(KeyShares share);
     }
 }

@@ -1,12 +1,9 @@
 package com.example.home.secureforwarding;
 
 import android.Manifest;
-import android.app.Service;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -14,20 +11,14 @@ import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.text.InputType;
-import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileActivity;
-import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
-import com.example.home.secureforwarding.Entities.Shares;
 import com.example.home.secureforwarding.GoogleNearbySupports.NearbyService;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
@@ -39,23 +30,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.ObjectInputStream;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import io.reactivex.Single;
-import it.unisa.dia.gas.jpbc.Field;
-import it.unisa.dia.gas.jpbc.Pairing;
-import it.unisa.dia.gas.jpbc.PairingPreProcessing;
-import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -65,7 +44,6 @@ public class MainActivity extends AppCompatActivity {
     public static final int CAMERA_REQUEST = 2;
     private static boolean reqBool = false;
     private static final String IMG_NUM_KEY = "image_num";
-    private String deviceId;
     public static final String INTENT_IMG = "imgFile";
 
     /**
@@ -80,35 +58,25 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.ACCESS_COARSE_LOCATION
     };
 
-    @BindView(R.id.deviceId)
-    public Button deviceIdBtn;
+    @BindView(R.id.deviceId) public Button deviceIdBtn;
 
-    @BindView(R.id.textView)
-    public TextView displayDeviceid;
+    @BindView(R.id.textView) public TextView displayDeviceid;
 
-    @BindView(R.id.cameraBtn)
-    public Button cameraBtn;
+    @BindView(R.id.cameraBtn) public Button cameraBtn;
 
-    @BindView(R.id.ownMsg)
-    Button ownMsg;
+    @BindView(R.id.ownMsg) Button ownMsg;
 
-    @BindView(R.id.intermsg)
-    Button interMsg;
+    @BindView(R.id.intermsg) Button interMsg;
 
-    @BindView(R.id.destMsg)
-    Button destMsg;
+    @BindView(R.id.destMsg) Button destMsg;
 
-    @BindView(R.id.operations)
-    TextView operationsTxt;
+    @BindView(R.id.operations) TextView operationsTxt;
 
-    @BindView(R.id.enable)
-    Button nearbyEnable;
+    @BindView(R.id.enable) Button nearbyEnable;
 
-    @BindView(R.id.disable)
-    Button nearbyDisable;
+    @BindView(R.id.disable) Button nearbyDisable;
 
-    @BindView(R.id.netMsg)
-    TextView internetMsg;
+    @BindView(R.id.netMsg) TextView internetMsg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -303,11 +271,20 @@ public class MainActivity extends AppCompatActivity {
     public void requestDeviceID() {
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
         final DatabaseReference reference = database.getReference("counter");
+        final boolean[] flag = new boolean[1];
+        flag[0] = true;
         final int[] val = new int[1];
         reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                val[0] = Integer.parseInt(dataSnapshot.getValue().toString());
+                if (flag[0]) {
+                    flag[0] = false;
+                    val[0] = Integer.parseInt(dataSnapshot.getValue().toString());
+                    reference.setValue(val[0] + 1);
+                    database.goOffline();
+                    SharedPreferenceHandler.setStringValues(MainActivity.this, DEVICE_ID, String.valueOf(val[0]));
+                    setHomeScreen(val[0]);
+                }
             }
 
             @Override
@@ -315,14 +292,12 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        reference.setValue(val[0] + 1);
-        database.goOffline();
-        SharedPreferenceHandler.setStringValues(MainActivity.this, DEVICE_ID, String.valueOf(val[0]));
-        setHomeScreen(val[0]);
+
     }
 
     private void setHomeScreen(int val) {
         displayDeviceid.setText("Device ID: " + val);
+        internetMsg.setVisibility(View.GONE);
         deviceIdBtn.setVisibility(View.GONE);
         setVisibilityToElements(View.VISIBLE);
     }

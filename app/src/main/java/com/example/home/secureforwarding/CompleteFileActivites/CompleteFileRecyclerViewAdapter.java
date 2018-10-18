@@ -43,8 +43,8 @@ public class CompleteFileRecyclerViewAdapter extends RecyclerView.Adapter<Comple
         if (file.exists()) {
             Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
             holder.imageView.setImageBitmap(bitmap);
-            holder.fileName.setText("File name:" + file.getName());
-            holder.destId.setText("Destination node:" + holder.completeFiles.getDestId());
+            holder.fileName.setText(file.getName());
+            holder.destId.setText(holder.completeFiles.getDestId());
         }
 
         holder.mView.setOnClickListener(new View.OnClickListener() {

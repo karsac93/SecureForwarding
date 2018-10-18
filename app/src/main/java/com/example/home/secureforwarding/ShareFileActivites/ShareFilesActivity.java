@@ -9,15 +9,11 @@ import android.util.Log;
 
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileActivity;
 import com.example.home.secureforwarding.DataHandler.DataConstant;
-import com.example.home.secureforwarding.Entities.Shares;
+import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.R;
 
 import org.apache.commons.lang3.SerializationUtils;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 
 public class ShareFilesActivity extends AppCompatActivity implements SharesFragment.OnListKeyFragmentInteractionListener {
     public static final String TAG = ShareFilesActivity.class.getSimpleName();
@@ -51,7 +47,7 @@ public class ShareFilesActivity extends AppCompatActivity implements SharesFragm
     }
 
     @Override
-    public void onListFragmentInteraction(Shares share) {
+    public void onListFragmentInteraction(KeyShares share) {
         if (share.getEncryptedNodeNum() == null) {
             if (!share.getShareType().contains(DataConstant.DATA_TYPE)) {
                 Intent intent = new Intent(this, ChooseEncryption.class);

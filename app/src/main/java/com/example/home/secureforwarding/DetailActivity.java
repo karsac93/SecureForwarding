@@ -2,16 +2,17 @@ package com.example.home.secureforwarding;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.example.home.secureforwarding.DataHandler.CreateDataShares;
@@ -21,17 +22,15 @@ import com.example.home.secureforwarding.Entities.KeyStore;
 import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.CreateKeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
-import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
-import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 import butterknife.BindView;
+import butterknife.BindViews;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.Observable;
@@ -42,6 +41,9 @@ import io.reactivex.schedulers.Schedulers;
 public class DetailActivity extends AppCompatActivity {
 
     private static final String TAG = DetailActivity.class.getSimpleName();
+    static final String STATIC = "static";
+    static final String DYNAMIC = "dynamic";
+    static final String HIGH = "high";
 
     @BindView(R.id.imageView)
     public ImageView imageView;
@@ -54,16 +56,17 @@ public class DetailActivity extends AppCompatActivity {
     File file;
 
     @BindView(R.id.destId)
-    EditText destId;
+    AutoCompleteTextView destId;
 
-    @BindView(R.id.radioGroup)
-    RadioGroup radioGroup;
+    @BindViews({R.id.radioGroup, R.id.priorityRadioGroup})
+    List<RadioGroup> radioGroups;
 
-    @BindView(R.id.staticPref)
-    RadioButton staticButton;
+    @BindViews({R.id.staticPref, R.id.dynamicPref, R.id.pirorityPref})
+    List<RadioButton> prefRadioButtons;
 
-    @BindView(R.id.dynamicPref)
-    RadioButton dynamicButton;
+    @BindViews({R.id.lowPref, R.id.mediumPref, R.id.highPref})
+    List<RadioButton> priorityRadioButtons;
+
 
     int dataNum, parityNum;
 
@@ -86,12 +89,14 @@ public class DetailActivity extends AppCompatActivity {
             try {
                 FileInputStream fileInputStream = new FileInputStream(value);
                 fileInputStream.read(fileByte);
-                byte[] pvtKey = SingletoneECPRE.getInstance().pvtKey;
-                CreateDataShares createDataShares = new CreateDataShares(value.getName(), KeyConstant.OWNER_TYPE, database, fileByte, key, dest, dataNum, parityNum);
+                CreateDataShares createDataShares = new CreateDataShares(value.getName().
+                        substring(0, value.getName().lastIndexOf(".")),
+                        KeyConstant.OWNER_TYPE, database, fileByte, key, dest, dataNum, parityNum);
                 byte[] sign = createDataShares.generateDataShares();
-                CreateKeyShares createKeyShares = new CreateKeyShares(value.getName(), KeyConstant.OWNER_TYPE, database, key, sign, dest);
+                CreateKeyShares createKeyShares = new CreateKeyShares(value.getName().
+                        substring(0, value.getName().lastIndexOf(".")),
+                        KeyConstant.OWNER_TYPE, database, key, sign, dest);
                 createKeyShares.generateKeyShares();
-                Log.d(TAG, "Total number of inserted data and key shares:" + database.dao().numShares());
                 DetailActivity.this.runOnUiThread(new Runnable() {
                     public void run() {
                         Toast.makeText(DetailActivity.this, "Key and data shares are created!", Toast.LENGTH_SHORT).show();
@@ -126,7 +131,7 @@ public class DetailActivity extends AppCompatActivity {
         file = (File) getIntent().getSerializableExtra(MainActivity.INTENT_IMG);
         Log.d(TAG, "Obtained file:" + file.getName());
 
-        staticButton.setChecked(true);
+        prefRadioButtons.get(0).setChecked(true);
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         Bitmap bitmap = null;
@@ -136,6 +141,22 @@ public class DetailActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         imageView.setImageBitmap(bitmap);
+
+        List<KeyStore> destIds = database.dao().getKeyStores();
+        ArrayAdapter<KeyStore> adapter = new ArrayAdapter<>(this,
+                android.R.layout.select_dialog_item, destIds);
+        destId.setAdapter(adapter);
+
+        radioGroups.get(0).setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (checkedId == prefRadioButtons.get(2).getId()) {
+                    radioGroups.get(1).setVisibility(View.VISIBLE);
+                } else {
+                    radioGroups.get(1).setVisibility(View.GONE);
+                }
+            }
+        });
     }
 
     /**
@@ -146,31 +167,53 @@ public class DetailActivity extends AppCompatActivity {
     public void createKeyDataShares() {
         shareBtn.setEnabled(false);
         String dest = destId.getText().toString().trim();
-        if (dest == null || dest.trim().length() == 0)
+        if (dest == null || dest.trim().length() == 0) {
             Toast.makeText(DetailActivity.this, "Please enter the destID", Toast.LENGTH_SHORT).show();
+            shareBtn.setEnabled(true);
+            return;
+        }
+
+
+        int id = radioGroups.get(0).getCheckedRadioButtonId();
+        if (id == prefRadioButtons.get(0).getId())
+            calculateKN(STATIC, 0L);
+        else if (id == prefRadioButtons.get(1).getId())
+            calculateKN(DYNAMIC, file.length());
         else {
-            int id = radioGroup.getCheckedRadioButtonId();
-            if (id == staticButton.getId()) {
+            int prefId = radioGroups.get(1).getCheckedRadioButtonId();
+            if (prefId == priorityRadioButtons.get(0).getId())
+                calculateKN(DYNAMIC, file.length());
+            else if (prefId == priorityRadioButtons.get(1).getId())
+                calculateKN(STATIC, 0L);
+            else
+                calculateKN(HIGH, 0L);
+        }
+
+
+        CompleteFiles completeFiles = new CompleteFiles(file.getName().
+                substring(0, file.getName().lastIndexOf(".")), KeyConstant.OWNER_TYPE,
+                destId.getText().toString(), file.getAbsolutePath());
+        Log.d(TAG, "destId" + destId.getText().toString());
+        database.dao().insertCompleteFile(completeFiles);
+        Log.d(TAG, "Main thread name:" + Thread.currentThread().getName());
+        Observable.just(file)
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.newThread())
+                .subscribe(shareObserver);
+    }
+
+    private void calculateKN(String type, Long fileSize) {
+        switch (type) {
+            case STATIC:
+                dataNum = 4;
+                parityNum = 2;
+                break;
+            case DYNAMIC:
+                dataNum = (int) (fileSize / 500000) + 1;
+                parityNum = dataNum;
+            case HIGH:
                 dataNum = 4;
                 parityNum = 4;
-            } else {
-                int dataShardSize = (int) (file.length() / 512000);
-                Log.d(TAG, "Number of data shards in dynamic:" + dataShardSize + " File length:" + file.length());
-                dataNum = dataShardSize + 1;
-                parityNum = dataNum;
-            }
-            CompleteFiles completeFiles = new CompleteFiles();
-            completeFiles.setId(file.getName());
-            completeFiles.setFilePath(file.getAbsolutePath());
-            completeFiles.setType(KeyConstant.OWNER_TYPE);
-            completeFiles.setDestId(destId.getText().toString());
-            Log.d(TAG, "destId" + destId.getText().toString());
-            database.dao().insertCompleteFile(completeFiles);
-            Log.d(TAG, "Main thread name:" + Thread.currentThread().getName());
-            Observable.just(file)
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(Schedulers.newThread())
-                    .subscribe(shareObserver);
         }
     }
 

@@ -3,7 +3,7 @@ package com.example.home.secureforwarding.KeyHandler;
 import android.util.Log;
 
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
-import com.example.home.secureforwarding.Entities.Shares;
+import com.example.home.secureforwarding.Entities.KeyShares;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -86,14 +86,12 @@ public class CreateKeyShares {
         }
 
         //each share is encrypted using EC and updated in the database
-        Shares dbShare;
+        KeyShares dbShare;
         for (int i = 0; i < shares.length; i++) {
             byte[] cipher_data = SingletoneECPRE.getInstance().Encryption(keyShares.get(i));
-            dbShare = new Shares(device_msg_id, shares[i].getNumber(), nodeType,
-                    KEY_TYPE, NOT_SENT_STATUS, null, cipher_data, destId);
+            dbShare = new KeyShares(device_msg_id, destId, shares[i].getNumber(), nodeType,
+                    KEY_TYPE, NOT_SENT_STATUS, null, cipher_data, null, null);
             database.dao().insertKeyShares(dbShare);
         }
-
-        Log.d(TAG, "Total number of inserted shares:" + database.dao().numShares());
     }
 }

@@ -1,6 +1,5 @@
 package com.example.home.secureforwarding.ShareFileActivites;
 
-import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,16 +9,13 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
+import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.Entities.KeyStore;
-import com.example.home.secureforwarding.Entities.Shares;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.R;
 
 import org.apache.commons.lang3.SerializationUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.List;
 
 import butterknife.BindView;
@@ -37,7 +33,7 @@ public class ChooseEncryption extends AppCompatActivity {
     Button generateProxyButton;
 
     AppDatabase database;
-    Shares share;
+    KeyShares share;
 
     SingletoneECPRE ecpre;
 
@@ -52,7 +48,7 @@ public class ChooseEncryption extends AppCompatActivity {
         Bundle bundle = getIntent().getExtras();
         byte[] shareObject = bundle.getByteArray(ShareFilesActivity.SEND_SHARE_KEY);
         share = SerializationUtils.deserialize(shareObject);
-        Log.d(TAG, "Share obtained in new Activity:" + share.getType());
+        Log.d(TAG, "Shares obtained in new Activity:" + share.getType());
 
         database = AppDatabase.getAppDatabase(this);
         List<KeyStore> keystore = database.dao().getKeyStores();

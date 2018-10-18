@@ -47,7 +47,7 @@
         android:layout_marginBottom="8dp"
         android:text="Generate Proxy key"
         android:textColor="@android:color/white"
-        app:backgroundTint="@color/colorPrimaryDark"
+        app:backgroundTint="@color/colorPrimary"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
