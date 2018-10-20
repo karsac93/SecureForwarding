@@ -13,6 +13,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import static com.example.home.secureforwarding.DataHandler.DataConstant.BYTES_IN_INT;
 
@@ -56,7 +58,7 @@ public class CreateDataShares {
      *
      * @return
      */
-    public byte[] generateDataShares() {
+    public byte[][] generateDataShares() {
 
         // original data is encrypted with aes key
         byte[] encodedVal = new AEScrypto().Encrypt(aesKey, fileByte);
@@ -99,7 +101,21 @@ public class CreateDataShares {
                     null, shards[i]);
             database.dao().insertDataShares(shares);
         }
-        return signature;
+
+
+        byte[][] secrets = new byte[2][];
+        secrets[0] = signature;
+        byte[] secret = new byte[KeyConstant.keyByteLenght];
+        Arrays.fill(secret, (byte) 1);
+        byte[] dataInfo;
+        if (DATA_SHARDS != 4 || PARITY_SHARDS != 2) {
+            String Stringsecret = "dy=" + String.valueOf(DATA_SHARDS) + ";py=" + PARITY_SHARDS + ";";
+            dataInfo = Stringsecret.getBytes();
+            System.arraycopy(dataInfo, 0, secret, 0, dataInfo.length);
+            Log.d(TAG, "Important observation:" + secret.length + " secret msg:" + new String(secret));
+        }
+        secrets[1] = secret;
+        return secrets;
     }
 
 

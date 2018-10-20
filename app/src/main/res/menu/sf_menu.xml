@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/overflow"
+        android:icon="@drawable/overflow"
+        android:title="overflow"
+        app:showAsAction="ifRoom">
+        <menu>
+            <item
+                android:id="@+id/reset_all"
+                android:title="Reset all" />
+            <item
+                android:id="@+id/reset_msg"
+                android:title="Reset all msg" />
+            <item
+                android:id="@+id/data_decoding"
+                android:title="Data Decoding" />
+        </menu>
+    </item>
+</menu>

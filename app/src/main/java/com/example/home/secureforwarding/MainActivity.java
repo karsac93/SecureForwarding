@@ -1,8 +1,12 @@
 package com.example.home.secureforwarding;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,12 +17,18 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileActivity;
+import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
 import com.example.home.secureforwarding.GoogleNearbySupports.NearbyService;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
@@ -45,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private static boolean reqBool = false;
     private static final String IMG_NUM_KEY = "image_num";
     public static final String INTENT_IMG = "imgFile";
+    public static final String DATA_DECODE_SKIP = "data_decode";
 
     /**
      * File - create a file before taking picture and save it for performing data sharing
@@ -58,25 +69,35 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.ACCESS_COARSE_LOCATION
     };
 
-    @BindView(R.id.deviceId) public Button deviceIdBtn;
+    @BindView(R.id.deviceId)
+    public Button deviceIdBtn;
 
-    @BindView(R.id.textView) public TextView displayDeviceid;
+    @BindView(R.id.textView)
+    public TextView displayDeviceid;
 
-    @BindView(R.id.cameraBtn) public Button cameraBtn;
+    @BindView(R.id.cameraBtn)
+    public Button cameraBtn;
 
-    @BindView(R.id.ownMsg) Button ownMsg;
+    @BindView(R.id.ownMsg)
+    Button ownMsg;
 
-    @BindView(R.id.intermsg) Button interMsg;
+    @BindView(R.id.intermsg)
+    Button interMsg;
 
-    @BindView(R.id.destMsg) Button destMsg;
+    @BindView(R.id.destMsg)
+    Button destMsg;
 
-    @BindView(R.id.operations) TextView operationsTxt;
+    @BindView(R.id.operations)
+    TextView operationsTxt;
 
-    @BindView(R.id.enable) Button nearbyEnable;
+    @BindView(R.id.enable)
+    Button nearbyEnable;
 
-    @BindView(R.id.disable) Button nearbyDisable;
+    @BindView(R.id.disable)
+    Button nearbyDisable;
 
-    @BindView(R.id.netMsg) TextView internetMsg;
+    @BindView(R.id.netMsg)
+    TextView internetMsg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,8 +106,20 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
+        checkDeviceId();
+        initializeEcpre();
+    }
+
+    private void initializeEcpre() {
+        InitializeEcpr initializeEcpr = new InitializeEcpr(this);
+        initializeEcpr.run();
+    }
+
+    private void checkDeviceId() {
         if (SharedPreferenceHandler.getStringValues(this, DEVICE_ID).length() == 0) {
-            displayDeviceid.append("Please set device ID");
+            displayDeviceid.setText("Device ID: Please set device ID");
+            deviceIdBtn.setVisibility(View.VISIBLE);
+            internetMsg.setVisibility(View.VISIBLE);
             setVisibilityToElements(View.GONE);
         } else {
             displayDeviceid.append(SharedPreferenceHandler.getStringValues(this, DEVICE_ID));
@@ -94,8 +127,57 @@ public class MainActivity extends AppCompatActivity {
             internetMsg.setVisibility(View.GONE);
             setVisibilityToElements(View.VISIBLE);
         }
-        InitializeEcpr initializeEcpr = new InitializeEcpr(this);
-        initializeEcpr.run();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = this.getMenuInflater();
+        inflater.inflate(R.menu.sf_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        AppDatabase database = AppDatabase.getAppDatabase(this);
+        switch (item.getItemId()) {
+            case R.id.reset_all:
+                SharedPreferences sharedPreferences = SharedPreferenceHandler.getSharedPreferences(this);
+                sharedPreferences.edit().clear().commit();
+                database.clearAllTables();
+                checkDeviceId();
+                initializeEcpre();
+                break;
+            case R.id.reset_msg:
+                Log.d(TAG, "Good inside reset msg");
+                database = AppDatabase.getAppDatabase(this);
+                database.clearAllTables();
+                break;
+            case R.id.data_decoding:
+                Log.d(TAG, "Good inside data decoding");
+                View view = getLayoutInflater().inflate(R.layout.custom_popup, null);
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Choose Action");
+                builder.setView(view);
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        SharedPreferenceHandler.setBooleanValue(MainActivity.this,
+                                DATA_DECODE_SKIP, true);
+                    }
+                });
+                builder.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        SharedPreferenceHandler.setBooleanValue(MainActivity.this,
+                                DATA_DECODE_SKIP, false);
+                    }
+                });
+                builder.create();
+                builder.show();
+                break;
+
+        }
+        return true;
     }
 
     /**

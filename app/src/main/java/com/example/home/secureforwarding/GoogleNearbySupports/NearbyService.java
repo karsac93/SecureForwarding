@@ -32,11 +32,9 @@ import java.util.ArrayList;
 public class NearbyService extends Service {
     public static final String TAG = NearbyService.class.getSimpleName();
     public static String SERVICE_ID = "secure_forwarding";
-    static String NICKNAME = "XSFX_";
+    static String NICKNAME = "XSFX";
     public static final int HANDLE_DELAY = 2000;
     ArrayList<String> previousConnectedDeviceId = new ArrayList<>();
-    String receivedDevice_id;
-    String deviceId;
     boolean flag = false;
     AppDatabase appDatabase;
 
@@ -61,8 +59,6 @@ public class NearbyService extends Service {
         Log.d(TAG, "Service is started!");
         Nearby.getConnectionsClient(getApplicationContext()).stopAllEndpoints();
         appDatabase = AppDatabase.getAppDatabase(this);
-        deviceId = SharedPreferenceHandler.getStringValues(this, MainActivity.DEVICE_ID);
-        NICKNAME = NICKNAME + deviceId;
         adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
         return START_NOT_STICKY;
     }
@@ -97,11 +93,9 @@ public class NearbyService extends Service {
     ConnectionLifecycleCallback connectionLifecycleCallback = new ConnectionLifecycleCallback() {
         @Override
         public void onConnectionInitiated(@NonNull String endpointId, @NonNull ConnectionInfo connectionInfo) {
-            if (connectionInfo.isIncomingConnection() && connectionInfo.getEndpointName().contains("XSFX_")) {
+            if (connectionInfo.isIncomingConnection() && connectionInfo.getEndpointName().contains(NICKNAME)) {
                 Log.d(TAG, "device_id name:" + connectionInfo.getEndpointName());
                 flag = true;
-                receivedDevice_id = connectionInfo.getEndpointName().
-                        substring(connectionInfo.getEndpointName().lastIndexOf("_"));
                 Nearby.getConnectionsClient(getApplicationContext()).stopDiscovery();
                 Nearby.getConnectionsClient(getApplicationContext()).stopAdvertising();
                 Nearby.getConnectionsClient(getApplicationContext())
@@ -122,13 +116,11 @@ public class NearbyService extends Service {
                     break;
                 case ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED:
                     Log.d(TAG, "Connection Failed");
-                    receivedDevice_id = "";
                     break;
                 default:
                     Log.d(TAG, "Connection broken");
                     Toast.makeText(NearbyService.this,
                             "Connection broken, searching nearby devices again!", Toast.LENGTH_SHORT).show();
-                    receivedDevice_id = "";
                     flag = false;
                     adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
             }
@@ -144,12 +136,7 @@ public class NearbyService extends Service {
         @Override
         public void onPayloadReceived(@NonNull String endpointId, @NonNull Payload payload) {
             if(payload.getType() == Payload.Type.BYTES){
-                byte[] neighbourPubKey = payload.asBytes();
-                KeyStore keyStore = new KeyStore(receivedDevice_id, neighbourPubKey);
-                appDatabase.dao().insertKeyStore(keyStore);
-                Nearby.getConnectionsClient(getApplicationContext()).disconnectFromEndpoint(endpointId);
                 flag = false;
-                receivedDevice_id = "";
                 adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
             }
         }
@@ -166,8 +153,6 @@ public class NearbyService extends Service {
             if (discoveredEndpointInfo.getServiceId().equals(SERVICE_ID)) {
                 flag = true;
                 Log.d(TAG, "Discovered endpoint name:" + discoveredEndpointInfo.getEndpointName());
-                receivedDevice_id = discoveredEndpointInfo.getEndpointName()
-                        .substring(discoveredEndpointInfo.getEndpointName().lastIndexOf("_")+1);
                 Nearby.getConnectionsClient(getApplicationContext()).stopDiscovery();
                 Nearby.getConnectionsClient(getApplicationContext()).stopAdvertising();
                 Log.d(TAG, "Requesting connection!");
@@ -179,7 +164,6 @@ public class NearbyService extends Service {
 
         @Override
         public void onEndpointLost(@NonNull String s) {
-            receivedDevice_id = "";
         }
     };
 }

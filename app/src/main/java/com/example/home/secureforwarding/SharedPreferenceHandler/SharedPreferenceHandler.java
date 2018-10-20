@@ -29,4 +29,15 @@ public class SharedPreferenceHandler {
     public static int getIntValues(Context ctx, String key) {
         return getSharedPreferences(ctx).getInt(key, 0);
     }
+
+    public static void setBooleanValue(Context context, String key, boolean value){
+        SharedPreferences.Editor editor = getSharedPreferences(context).edit();
+        editor.putBoolean(key, value);
+        editor.commit();
+    }
+
+    public static boolean getBooleanValue(Context context, String key){
+        boolean value = getSharedPreferences(context).getBoolean(key, false);
+        return value;
+    }
 }

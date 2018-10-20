@@ -17,7 +17,7 @@ public class CreateKeyShares {
     private String nodeType;
     private AppDatabase database;
     private byte[] key;
-    private byte[] sign;
+    private byte[][] secrets;
     private String destId;
 
 
@@ -28,15 +28,15 @@ public class CreateKeyShares {
      * @param nodeType      - Type refers to owner, Inter or destination
      * @param database      - instance of database
      * @param key           - AES key
-     * @param sign          - A sign byte[] of one of the data fragment
+     * @param secrets          - A sign byte[] of one of the data fragment
      * @param destId        - Destination id of this share
      */
-    public CreateKeyShares(String device_msg_id, String nodeType, AppDatabase database, byte[] key, byte[] sign, String destId) {
+    public CreateKeyShares(String device_msg_id, String nodeType, AppDatabase database, byte[] key, byte[][] secrets, String destId) {
         this.device_msg_id = device_msg_id;
         this.nodeType = nodeType;
         this.database = database;
         this.key = key;
-        this.sign = sign;
+        this.secrets = secrets;
         this.destId = destId;
     }
 
@@ -50,8 +50,8 @@ public class CreateKeyShares {
         // Based on K, the size of hidden msg is calculated
         RSecretShare rss = new RSecretShare(KeyConstant.keyShareK, KeyConstant.keyShareN);
         BigInteger[] hiddenInfo = new BigInteger[KeyConstant.keyShareK - 2];
-
-        for (int i = 0; i < hiddenInfo.length; i++) {
+        hiddenInfo[0] = new BigInteger(1, secrets[1]);
+        for (int i = 1; i < hiddenInfo.length; i++) {
             byte[] b = new byte[KeyConstant.keyByteLenght];
             new Random().nextBytes(b);
             hiddenInfo[i] = new BigInteger(1, b);
@@ -61,7 +61,7 @@ public class CreateKeyShares {
         MerkleHashTree hashTree = new MerkleHashTree();
         ArrayList<byte[]> keyShares = new ArrayList<>();
         for (int i = 0; i < shares.length; i++) {
-            shares[i].setSignature(sign);
+            shares[i].setSignature(secrets[0]);
             byte[] thisShare = shares[i].getShare().toByteArray();
             byte[] keyShare = new byte[KeyConstant.keyByteLenght];
             if (thisShare.length > KeyConstant.keyByteLenght) {

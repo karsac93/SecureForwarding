@@ -9,7 +9,6 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -92,10 +91,10 @@ public class DetailActivity extends AppCompatActivity {
                 CreateDataShares createDataShares = new CreateDataShares(value.getName().
                         substring(0, value.getName().lastIndexOf(".")),
                         KeyConstant.OWNER_TYPE, database, fileByte, key, dest, dataNum, parityNum);
-                byte[] sign = createDataShares.generateDataShares();
+                byte[][] secretMsgs = createDataShares.generateDataShares();
                 CreateKeyShares createKeyShares = new CreateKeyShares(value.getName().
                         substring(0, value.getName().lastIndexOf(".")),
-                        KeyConstant.OWNER_TYPE, database, key, sign, dest);
+                        KeyConstant.OWNER_TYPE, database, key, secretMsgs, dest);
                 createKeyShares.generateKeyShares();
                 DetailActivity.this.runOnUiThread(new Runnable() {
                     public void run() {
@@ -146,6 +145,8 @@ public class DetailActivity extends AppCompatActivity {
         ArrayAdapter<KeyStore> adapter = new ArrayAdapter<>(this,
                 android.R.layout.select_dialog_item, destIds);
         destId.setAdapter(adapter);
+        if(adapter.getCount() > 0)
+            destId.showDropDown();
 
         radioGroups.get(0).setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -211,9 +212,11 @@ public class DetailActivity extends AppCompatActivity {
             case DYNAMIC:
                 dataNum = (int) (fileSize / 500000) + 1;
                 parityNum = dataNum;
+                break;
             case HIGH:
                 dataNum = 4;
                 parityNum = 4;
+                break;
         }
     }
 
