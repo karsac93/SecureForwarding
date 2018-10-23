@@ -35,7 +35,6 @@
             android:id="@+id/skipBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checked="true"
             android:text="Skip" />
 
         <RadioButton
@@ -43,7 +42,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Do not skip" />
+            android:text="Do not skip"
+            android:checked="true"/>
     </RadioGroup>
 
 </android.support.constraint.ConstraintLayout>

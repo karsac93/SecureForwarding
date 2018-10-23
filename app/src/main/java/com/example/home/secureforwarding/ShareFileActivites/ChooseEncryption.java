@@ -62,12 +62,12 @@ public class ChooseEncryption extends AppCompatActivity {
      */
     @OnClick(R.id.generateproxy)
     public void generateProxy() {
-        String nodeId = (String) nodeSpinner.getSelectedItem();
-        if (nodeId == null || nodeId.length() == 0) {
+        KeyStore keystoreObj = (KeyStore) nodeSpinner.getSelectedItem();
+        if (keystoreObj == null) {
             Toast.makeText(this, "List is empty, try again later!", Toast.LENGTH_SHORT).show();
             return;
         }
-        byte[] publicKey = database.dao().getPublicKey(nodeId);
+        byte[] publicKey = keystoreObj.getPublicKey();
         if (publicKey == null || publicKey.length == 0) {
             Toast.makeText(this, "Something wrong! Not able to fetch public key of this device!", Toast.LENGTH_SHORT).show();
             return;
@@ -80,8 +80,8 @@ public class ChooseEncryption extends AppCompatActivity {
         byte[] proxyReEncyption = ecpre.ReEncryption(pubKey, proxyKey);
 
         share.setCipher_data(proxyReEncyption);
-        share.setEncryptedNodeNum(nodeId);
+        share.setEncryptedNodeNum(keystoreObj.getId());
         database.dao().updateKeyShare(share);
-
+        Toast.makeText(this, "A proxy key is generated with chosen node for this share!", Toast.LENGTH_SHORT).show();
     }
 }

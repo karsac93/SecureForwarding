@@ -9,6 +9,7 @@ import android.util.Log;
 
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileActivity;
 import com.example.home.secureforwarding.DataHandler.DataConstant;
+import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.R;
@@ -47,17 +48,13 @@ public class ShareFilesActivity extends AppCompatActivity implements SharesFragm
     }
 
     @Override
-    public void onListFragmentInteraction(KeyShares share) {
-        if (share.getEncryptedNodeNum() == null) {
-            if (!share.getShareType().contains(DataConstant.DATA_TYPE)) {
-                Intent intent = new Intent(this, ChooseEncryption.class);
-                Bundle bundle = new Bundle();
-                byte[] shareByte = SerializationUtils.serialize(share);
-                bundle.putByteArray(SEND_SHARE_KEY, shareByte);
-                intent.putExtras(bundle);
-                startActivity(intent);
-            }
-        }
-
+    public void onListFragmentInteraction(DataShares dataShare) {
+        KeyShares share = (KeyShares) dataShare;
+        Intent intent = new Intent(this, ChooseEncryption.class);
+        Bundle bundle = new Bundle();
+        byte[] shareByte = SerializationUtils.serialize(share);
+        bundle.putByteArray(SEND_SHARE_KEY, shareByte);
+        intent.putExtras(bundle);
+        startActivity(intent);
     }
 }

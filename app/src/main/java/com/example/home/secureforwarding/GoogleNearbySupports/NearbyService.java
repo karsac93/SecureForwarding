@@ -9,7 +9,9 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
+import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.Entities.KeyStore;
+import com.example.home.secureforwarding.KeyHandler.DecipherKeyShare;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.MainActivity;
 import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
@@ -27,7 +29,14 @@ import com.google.android.gms.nearby.connection.PayloadCallback;
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
 import com.google.android.gms.nearby.connection.Strategy;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.security.Key;
 import java.util.ArrayList;
+import java.util.List;
 
 public class NearbyService extends Service {
     public static final String TAG = NearbyService.class.getSimpleName();
@@ -111,8 +120,9 @@ public class NearbyService extends Service {
             switch (result.getStatus().getStatusCode()) {
                 case ConnectionsStatusCodes.STATUS_OK:
                     Log.d(TAG, "Connection successfully created with :" + endpointId);
-                    Payload payload = Payload.fromBytes(SingletoneECPRE.getInstance().pubKey);
-                    Nearby.getConnectionsClient(getApplicationContext()).sendPayload(endpointId, payload);
+                    Metadata metadata = new Metadata(SharedPreferenceHandler.getStringValues(getApplicationContext(), MainActivity.DEVICE_ID)
+                            , SingletoneECPRE.getInstance().pubKey);
+                    sendStream(endpointId, metadata);
                     break;
                 case ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED:
                     Log.d(TAG, "Connection Failed");
@@ -132,12 +142,59 @@ public class NearbyService extends Service {
         }
     };
 
+    private void sendStream(String endpointId, Object obj) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(obj);
+            oos.flush();
+            oos.close();
+            InputStream is = new ByteArrayInputStream(baos.toByteArray());
+            Nearby.getConnectionsClient(this).sendPayload(endpointId, Payload.fromStream(is));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     PayloadCallback payloadCallback = new PayloadCallback() {
         @Override
         public void onPayloadReceived(@NonNull String endpointId, @NonNull Payload payload) {
-            if(payload.getType() == Payload.Type.BYTES){
-                flag = false;
-                adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
+            if (payload.getType() == Payload.Type.STREAM) {
+                Object receivedObj;
+                InputStream inputStream = payload.asStream().asInputStream();
+                try {
+                    ObjectInputStream ois = new ObjectInputStream(inputStream);
+                    receivedObj = ois.readObject();
+                    ois.close();
+                    if (receivedObj.getClass().equals(Metadata.class)) {
+                        Metadata metadata = (Metadata) receivedObj;
+                        if (!previousConnectedDeviceId.contains(metadata.deviceId)) {
+                            appDatabase.dao().insertKeyStore(new KeyStore(metadata.deviceId, metadata.devicePubKey));
+                            previousConnectedDeviceId.add(metadata.deviceId);
+                            Log.d(TAG, "connected device Id:" + metadata.deviceId);
+                            P2PHandler p2PHandler = new P2PHandler(metadata.deviceId,
+                                    metadata.devicePubKey, getApplicationContext());
+                            sendStream(endpointId, p2PHandler.fetchFilesToSend());
+                            return;
+                        }
+                    }
+                    SharesPOJO sharesPOJO = (SharesPOJO) receivedObj;
+                    Log.d(TAG, "Number of completeFiles:" + sharesPOJO.completeFilesToSend.size());
+                    if(sharesPOJO.keySharesToSend.size() > 0){
+                        for(KeyShares keyShares : sharesPOJO.keySharesToSend){
+                            byte[] obtained_byte = SingletoneECPRE.getInstance().Decryption(keyShares.getCipher_data(), keyShares.getData(), SingletoneECPRE.getInstance().pvtKey);
+                            keyShares.setData(obtained_byte);
+                        }
+                    }
+                    DecipherKeyShare decipherKeyShare = new DecipherKeyShare(sharesPOJO.keySharesToSend);
+
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+//                Nearby.getConnectionsClient(getApplicationContext()).disconnectFromEndpoint(endpointId);
+//                flag = false;
+//                adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
             }
         }
 

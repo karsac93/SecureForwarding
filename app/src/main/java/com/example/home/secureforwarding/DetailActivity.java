@@ -145,8 +145,8 @@ public class DetailActivity extends AppCompatActivity {
         ArrayAdapter<KeyStore> adapter = new ArrayAdapter<>(this,
                 android.R.layout.select_dialog_item, destIds);
         destId.setAdapter(adapter);
-        if(adapter.getCount() > 0)
-            destId.showDropDown();
+//        if(adapter.getCount() > 0)
+//            destId.showDropDown();
 
         radioGroups.get(0).setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -210,6 +210,7 @@ public class DetailActivity extends AppCompatActivity {
                 parityNum = 2;
                 break;
             case DYNAMIC:
+                Log.d(TAG, "File length:" + fileSize);
                 dataNum = (int) (fileSize / 500000) + 1;
                 parityNum = dataNum;
                 break;

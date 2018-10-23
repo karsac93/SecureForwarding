@@ -1,6 +1,7 @@
 package com.example.home.secureforwarding.ShareFileActivites;
 
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,7 @@ import java.util.List;
 
 public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySharesRecyclerViewAdapter.ViewHolder> {
 
+    public static final String TAG = MyKeySharesRecyclerViewAdapter.class.getSimpleName();
     private final List<DataShares> shares;
     private final OnListKeyFragmentInteractionListener mListener;
 
@@ -33,18 +35,27 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.shareFile = shares.get(position);
-        final DataShares dataShare;
-        if (holder.shareFile instanceof DataShares) {
+        DataShares dataShare = null;
+
+        if (holder.shareFile.getClass().equals(KeyShares.class)) {
+            KeyShares keyShare = (KeyShares) holder.shareFile;
+            String encryptedNum = "NA";
+            if (keyShare.getEncryptedNodeNum() != null && keyShare.getEncryptedNodeNum().length() != 0) {
+                encryptedNum = keyShare.getEncryptedNodeNum();
+                holder.encryptedNum.setText(encryptedNum);
+                holder.encryptedNum.setVisibility(View.VISIBLE);
+                holder.proxyTxt.setVisibility(View.VISIBLE);
+            }
+            else{
+                holder.encryptedNum.setVisibility(View.GONE);
+                holder.proxyTxt.setVisibility(View.GONE);
+            }
+            dataShare = keyShare;
+        }
+        else if(holder.shareFile.getClass().equals(DataShares.class)){
             dataShare = holder.shareFile;
             holder.encryptedNum.setVisibility(View.GONE);
             holder.proxyTxt.setVisibility(View.GONE);
-        } else {
-            KeyShares keyShare = (KeyShares) holder.shareFile;
-            String encryptedNum = "NA";
-            if (keyShare.getEncryptedNodeNum() != null && keyShare.getEncryptedNodeNum().length() != 0)
-                encryptedNum = keyShare.getEncryptedNodeNum();
-            holder.encryptedNum.setText(encryptedNum);
-            dataShare = keyShare;
         }
 
         holder.share_type.setText(dataShare.getShareType());
@@ -60,11 +71,14 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
         if (dataShare.getSenderInfo() != null)
             senderInformation = dataShare.getSenderInfo();
         holder.senderInfo.setText(senderInformation);
+        final DataShares finalDataShare = dataShare;
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (null != mListener) {
-                    mListener.onListFragmentInteraction((KeyShares) dataShare);
+                    Log.d(TAG, "Instances:" + holder.shareFile.getClass().getSimpleName());
+                    if (finalDataShare instanceof KeyShares)
+                        mListener.onListFragmentInteraction(finalDataShare);
                 }
             }
         });

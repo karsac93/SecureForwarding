@@ -67,7 +67,7 @@ public class CreateKeyShares {
             if (thisShare.length > KeyConstant.keyByteLenght) {
                 System.arraycopy(thisShare, thisShare.length - KeyConstant.keyByteLenght, keyShare, 0, KeyConstant.keyByteLenght);
             } else {
-                System.arraycopy(thisShare, 0, keyShare, 0, KeyConstant.keyByteLenght);
+                System.arraycopy(thisShare, 0, keyShare, 0, thisShare.length);
             }
             System.arraycopy(aesCrypto.Hash(keyShare), 0, hashTree.leafNodes.get(i).hash, 0, AEScrypto.hashLenght);
             byte[] fullKeyShare = new byte[KeyConstant.keyByteLenght + AEScrypto.hashLenght * KeyConstant.treeHeight];

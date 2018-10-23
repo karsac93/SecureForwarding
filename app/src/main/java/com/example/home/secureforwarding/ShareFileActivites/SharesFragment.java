@@ -111,6 +111,6 @@ public class SharesFragment extends Fragment {
      */
     public interface OnListKeyFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onListFragmentInteraction(KeyShares share);
+        void onListFragmentInteraction(DataShares share);
     }
 }
