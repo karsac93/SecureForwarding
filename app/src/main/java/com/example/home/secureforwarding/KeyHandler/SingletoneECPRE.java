@@ -96,9 +96,7 @@ public class SingletoneECPRE {
             G = G.getImmutable();
             K = Zr.newElement();
             K.setFromBytes(getFromSharedPreferences(PREF_E_K, context));
-            K = K.getImmutable();
-            Zk = pairing.pairing(G, G.powZn(K)).getImmutable();
-            Zk = Zk.getImmutable();
+            Zk = pairing.pairing(G, G.powZn(K));
             pubKey = getFromSharedPreferences(PREF_PUB_KEY, context);
             pvtKey = getFromSharedPreferences(PREF_PVT_KEY, context);
             invKey = getFromSharedPreferences(PREF_INV_KEY, context);

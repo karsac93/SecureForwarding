@@ -16,17 +16,26 @@ import java.util.List;
 
 @Dao
 public interface DatabaseInterface {
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertCompleteFile(CompleteFiles completeFiles);
-
-    @Query("select * from completefiles where type=:type")
-    List<CompleteFiles> fetchCompleteFiles(String type);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertKeyShares(KeyShares shares);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertDataShares(DataShares shares);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertKeyStore(KeyStore keyStore);
+
+    @Update(onConflict = OnConflictStrategy.REPLACE)
+    void updateDataShare(DataShares dataShare);
+
+    @Update(onConflict = OnConflictStrategy.REPLACE)
+    void updateKeyShare(KeyShares shares);
+
+    @Query("select * from completefiles where type=:type")
+    List<CompleteFiles> fetchCompleteFiles(String type);
 
     @Query("select * from keystore")
     List<KeyStore> getKeyStores();
@@ -46,36 +55,44 @@ public interface DatabaseInterface {
     @Query("select public_key from keystore where id=:deviceId")
     byte[] getPublicKey(String deviceId);
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insertKeyStore(KeyStore keyStore);
-
-    @Update(onConflict = OnConflictStrategy.REPLACE)
-    void updateKeyShare(KeyShares shares);
-
     @Query("select * from completefiles where type=:owner_type and dest_id=:id")
     List<CompleteFiles> getCompleteFilesForDevice(String owner_type, String id);
+
+    @Query("select * from keyshares where file_id in (select min(file_id) from keyshares " +
+            "where status=:status and " +
+            "file_id not in (select file_id from keyshares where encrypted_node_num=:nodeId and" +
+            " dest_id<>:nodeId) and node_type<>:destType group by msg_id)")
+    List<KeyShares> getKeySharesForThisDevice(int status, String nodeId, String destType);
+
+    @Query("select * from keyshares where file_id in (select min(file_id) from keyshares " +
+            "where status=:status and encrypted_node_num=:nodeId and dest_id<>:nodeId group by msg_id)")
+    List<KeyShares> getKeySharesEncryptedWithDevice(int status, String nodeId);
+
+    @Query("select * from keyshares where node_type<>:nodeType and dest_id=:nodeId and status=:status")
+    List<KeyShares> getKeySharesForDestDevice(String nodeType, String nodeId, int status);
+
+    @Query("select * from datashares where file_id in (select min(file_id) from datashares " +
+            "where status=:status and node_type<>:destType and dest_id<>:destId group by msg_id)")
+    List<DataShares> getDataSharesForThisDevice(int status, String destType, String destId);
+
+    @Query("select * from datashares where file_id in (select file_id from datashares " +
+            "where node_type<>:destType and dest_id=:destId and status=:status)")
+    List<DataShares> getDataSharesForThisDestDevice(int status, String destType, String destId);
+
+    @Query("select count(*) from completefiles where id=:msg_id and type=:destType and status=:status")
+    int checkCompleteFilealreadyPresent(String msg_id, String destType, boolean status);
+
+    @Query("select count(*) from completefiles where id=:msg_id and type=:destType")
+    int checkCompleteFileRowExistsForMsg(String msg_id, String destType);
+
+    @Delete
+    void deleteCompleteFileId(CompleteFiles completeFiles);
 
     @Query("delete from keyshares where msg_id=:msg_id")
     void deleteKeySharesForMsg(String msg_id);
 
     @Query("delete from datashares where msg_id=:msg_id")
     void deleteDataSharesForMsg(String msg_id);
-
-    @Delete
-    void deleteCompleteFileId(CompleteFiles completeFiles);
-
-    @Query("select * from keyshares where file_id in (select min(file_id) from keyshares " +
-            "where status=:status and " +
-            "file_id not in (select file_id from keyshares where encrypted_node_num=:node_num and" +
-            " node_type<>:destType) group by msg_id)")
-    List<KeyShares> getKeySharesForThisDevice(int status, String node_num, String destType);
-
-    @Query("select * from keyshares where file_id in (select min(file_id) from keyshares " +
-            "where status=:status and encrypted_node_num=:node_num group by msg_id)")
-    List<KeyShares> getKeySharesEncryptedWithDevice(int status, String node_num);
-
-    @Query("select * from keyshares where file_id <= 7")
-    List<KeyShares> testKeyShares();
 
 
 }

@@ -59,7 +59,7 @@ public class DecipherKeyShare {
         BigInteger[] retrievedInfo = rss.ReconstructShare(secretShares1);
         for(BigInteger info : retrievedInfo){
             byte[] byteInfo = info.toByteArray();
-            Log.d(TAG, "---------Hidden message---------:" + new String(byteInfo));
+            Log.d(TAG, "---------Hidden message---------:" + new String(byteInfo) + " length:" + byteInfo.length);
         }
     }
 }

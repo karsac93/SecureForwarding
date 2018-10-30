@@ -3,6 +3,7 @@ package com.example.home.secureforwarding.KeyHandler;
 import android.util.Log;
 
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
+import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.Entities.KeyShares;
 
 import java.math.BigInteger;
@@ -19,6 +20,7 @@ public class CreateKeyShares {
     private byte[] key;
     private byte[][] secrets;
     private String destId;
+    String placeholderImage;
 
 
     private static final String TAG = CreateKeyShares.class.getSimpleName();
@@ -28,7 +30,7 @@ public class CreateKeyShares {
      * @param nodeType      - Type refers to owner, Inter or destination
      * @param database      - instance of database
      * @param key           - AES key
-     * @param secrets          - A sign byte[] of one of the data fragment
+     * @param secrets       - A sign byte[] of one of the data fragment
      * @param destId        - Destination id of this share
      */
     public CreateKeyShares(String device_msg_id, String nodeType, AppDatabase database, byte[] key, byte[][] secrets, String destId) {
@@ -88,10 +90,37 @@ public class CreateKeyShares {
         //each share is encrypted using EC and updated in the database
         KeyShares dbShare;
         for (int i = 0; i < shares.length; i++) {
-            byte[] cipher_data = SingletoneECPRE.getInstance().Encryption(keyShares.get(i));
+            //byte[] cipher_data = SingletoneECPRE.getInstance().Encryption(keyShares.get(i));
             dbShare = new KeyShares(device_msg_id, destId, shares[i].getNumber(), nodeType,
-                    KEY_TYPE, NOT_SENT_STATUS, null, cipher_data, null, null);
+                    KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i), null, null);
+
+//            if (i == 0 || i == 1) {
+//                KeyShares dbShare1 = new KeyShares("4_1", String.valueOf(15), shares[i].getNumber(), KeyConstant.INTER_TYPE,
+//                        KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i), null, null);
+//                database.dao().insertKeyShares(dbShare1);
+//            } else if (i == 2 || i == 3) {
+//                KeyShares dbShare1 = new KeyShares("4_3", String.valueOf(2), shares[i].getNumber(), KeyConstant.INTER_TYPE,
+//                        KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i), null, null);
+//                database.dao().insertKeyShares(dbShare1);
+//            } else if (i == 4 || i == 5) {
+//                KeyShares dbShare1 = new KeyShares("5_1", String.valueOf(10), shares[i].getNumber(), KeyConstant.INTER_TYPE,
+//                        KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i), null, null);
+//                database.dao().insertKeyShares(dbShare1);
+//            } else if (i == 6 || i == 7) {
+//                if(database.dao().checkCompleteFileRowExistsForMsg("10_2", KeyConstant.DEST_TYPE) == 0){
+//                    CompleteFiles completeFiles = new CompleteFiles("10_2",
+//                            KeyConstant.DEST_TYPE, device_msg_id.substring(0, device_msg_id.indexOf("_")), placeholderImage);
+//                    database.dao().insertCompleteFile(completeFiles);
+//                }
+//                KeyShares dbShare1 = new KeyShares("5_2", String.valueOf(1), shares[i].getNumber(), KeyConstant.DEST_TYPE,
+//                        KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i), null, null);
+//                database.dao().insertKeyShares(dbShare1);
+//            }
             database.dao().insertKeyShares(dbShare);
         }
+    }
+
+    public void setPlaceholderImage(String placeholderImage) {
+        this.placeholderImage = placeholderImage;
     }
 }

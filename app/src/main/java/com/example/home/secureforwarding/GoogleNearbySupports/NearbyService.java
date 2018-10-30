@@ -9,6 +9,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
+import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.Entities.KeyStore;
 import com.example.home.secureforwarding.KeyHandler.DecipherKeyShare;
@@ -60,6 +61,9 @@ public class NearbyService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "Service is destroyed!");
+        Nearby.getConnectionsClient(getApplicationContext()).stopAdvertising();
+        Nearby.getConnectionsClient(getApplicationContext()).stopDiscovery();
+        Nearby.getConnectionsClient(getApplicationContext()).stopAllEndpoints();
         adverDiscoverHandler.removeCallbacks(adverDiscoverRunnable);
     }
 
@@ -138,6 +142,7 @@ public class NearbyService extends Service {
 
         @Override
         public void onDisconnected(@NonNull String s) {
+            Log.d(TAG, "Disconnected");
 
         }
     };
@@ -176,25 +181,18 @@ public class NearbyService extends Service {
                                     metadata.devicePubKey, getApplicationContext());
                             sendStream(endpointId, p2PHandler.fetchFilesToSend());
                             return;
+                        } else {
+                            quitConnection(endpointId);
                         }
                     }
-                    SharesPOJO sharesPOJO = (SharesPOJO) receivedObj;
-                    Log.d(TAG, "Number of completeFiles:" + sharesPOJO.completeFilesToSend.size());
-                    if(sharesPOJO.keySharesToSend.size() > 0){
-                        for(KeyShares keyShares : sharesPOJO.keySharesToSend){
-                            byte[] obtained_byte = SingletoneECPRE.getInstance().Decryption(keyShares.getCipher_data(), keyShares.getData(), SingletoneECPRE.getInstance().pvtKey);
-                            keyShares.setData(obtained_byte);
-                        }
+                    else if(receivedObj.getClass().equals(SharesPOJO.class)){
+                        SharesPOJO sharesPOJO = (SharesPOJO) receivedObj;
+                        new IncomingMsgHandler(getApplicationContext(), sharesPOJO);
+
                     }
-                    DecipherKeyShare decipherKeyShare = new DecipherKeyShare(sharesPOJO.keySharesToSend);
-
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-//                Nearby.getConnectionsClient(getApplicationContext()).disconnectFromEndpoint(endpointId);
-//                flag = false;
-//                adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
             }
         }
 
@@ -203,6 +201,12 @@ public class NearbyService extends Service {
 
         }
     };
+
+    private void quitConnection(String endpointId) {
+        Nearby.getConnectionsClient(getApplicationContext()).disconnectFromEndpoint(endpointId);
+        flag = false;
+        adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
+    }
 
     EndpointDiscoveryCallback endpointDiscoveryCallback = new EndpointDiscoveryCallback() {
         @Override
@@ -221,6 +225,8 @@ public class NearbyService extends Service {
 
         @Override
         public void onEndpointLost(@NonNull String s) {
+            flag = false;
+            startAdverstisingDiscovery();
         }
     };
 }

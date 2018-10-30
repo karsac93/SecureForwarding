@@ -10,8 +10,10 @@ import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.Entities.KeyStore;
+import com.example.home.secureforwarding.Entities.SecretStore;
 
-@Database(version = 1, entities = {CompleteFiles.class, KeyStore.class, DataShares.class, KeyShares.class}, exportSchema = false)
+@Database(version = 1, entities = {CompleteFiles.class, KeyStore.class,
+        DataShares.class, KeyShares.class, SecretStore.class}, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase INSTANCE;
 

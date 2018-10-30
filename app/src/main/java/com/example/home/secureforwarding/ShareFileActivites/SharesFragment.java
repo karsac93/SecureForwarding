@@ -64,7 +64,7 @@ public class SharesFragment extends Fragment {
             dataShares.addAll(database.dao().getKeyShareForMsg(msg_id));
         } else {
             dataShares = database.dao().getInterDataShares(KeyConstant.INTER_TYPE);
-            dataShares.addAll(database.dao().getKeyShareForMsg(KeyConstant.INTER_TYPE));
+            dataShares.addAll(database.dao().getInterKeyShares(KeyConstant.INTER_TYPE));
         }
 
         // Set the adapter

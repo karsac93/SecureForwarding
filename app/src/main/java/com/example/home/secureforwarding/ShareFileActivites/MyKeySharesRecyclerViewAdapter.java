@@ -57,7 +57,7 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
             holder.encryptedNum.setVisibility(View.GONE);
             holder.proxyTxt.setVisibility(View.GONE);
         }
-
+        holder.msg_id.setText(dataShare.getMsg_id());
         holder.share_type.setText(dataShare.getShareType());
         holder.file_id.setText(String.valueOf(dataShare.getFileId()));
         holder.dest_id.setText(dataShare.getDestId());
@@ -91,6 +91,7 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
+        public final TextView msg_id;
         public final TextView share_type;
         public final TextView file_id;
         public final TextView dest_id;
@@ -105,6 +106,7 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
         public ViewHolder(View view) {
             super(view);
             mView = view;
+            msg_id = view.findViewById(R.id.share_msg_id);
             share_type = view.findViewById(R.id.share_type);
             file_id = view.findViewById(R.id.share_file_id);
             dest_id = view.findViewById(R.id.share_destId);

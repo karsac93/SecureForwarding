@@ -8,6 +8,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -41,6 +43,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -56,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String IMG_NUM_KEY = "image_num";
     public static final String INTENT_IMG = "imgFile";
     public static final String DATA_DECODE_SKIP = "data_decode";
+    public static final String PLACEHOLDER_IMAGE = "placeholder";
 
     /**
      * File - create a file before taking picture and save it for performing data sharing
@@ -108,6 +113,32 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.setVmPolicy(builder.build());
         checkDeviceId();
         initializeEcpre();
+        if(SharedPreferenceHandler.getStringValues(this, PLACEHOLDER_IMAGE).length() == 0){
+            createAndSavePlaceHolder();
+        }
+    }
+
+    private void createAndSavePlaceHolder() {
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.placeholder1);
+        String root = Environment.getExternalStorageDirectory().toString();
+        File myDir = new File(root + "/SecureForwarding/");
+        myDir.mkdirs();
+        String fname = "placeholder.png";
+        File placeholderFile = new File(myDir, fname);
+        Log.i(TAG, "" + file);
+        if (placeholderFile.exists())
+            placeholderFile.delete();
+        try {
+            placeholderFile.createNewFile();
+            FileOutputStream fileOutputStream = new FileOutputStream(placeholderFile);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
+            fileOutputStream.flush();
+            fileOutputStream.close();
+            SharedPreferenceHandler.setStringValues(this, PLACEHOLDER_IMAGE, placeholderFile.getAbsolutePath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void initializeEcpre() {

@@ -25,6 +25,9 @@ public class CompleteFiles implements Serializable {
     @ColumnInfo(name = "path")
     private String filePath;
 
+    @ColumnInfo(name = "status")
+    private boolean status;
+
     public String getId() {
         return id;
     }
@@ -74,6 +77,14 @@ public class CompleteFiles implements Serializable {
                 ", destId='" + destId + '\'' +
                 ", filePath='" + filePath + '\'' +
                 '}';
+    }
+
+    public boolean getStatus() {
+        return status;
+    }
+
+    public void setStatus(boolean status) {
+        this.status = status;
     }
 }
 

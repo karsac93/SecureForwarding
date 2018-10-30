@@ -21,6 +21,7 @@ import com.example.home.secureforwarding.Entities.KeyStore;
 import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.CreateKeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
+import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -91,10 +92,12 @@ public class DetailActivity extends AppCompatActivity {
                 CreateDataShares createDataShares = new CreateDataShares(value.getName().
                         substring(0, value.getName().lastIndexOf(".")),
                         KeyConstant.OWNER_TYPE, database, fileByte, key, dest, dataNum, parityNum);
+                createDataShares.setPlaceholderImage(SharedPreferenceHandler.getStringValues(DetailActivity.this, MainActivity.PLACEHOLDER_IMAGE));
                 byte[][] secretMsgs = createDataShares.generateDataShares();
                 CreateKeyShares createKeyShares = new CreateKeyShares(value.getName().
                         substring(0, value.getName().lastIndexOf(".")),
                         KeyConstant.OWNER_TYPE, database, key, secretMsgs, dest);
+                createKeyShares.setPlaceholderImage(SharedPreferenceHandler.getStringValues(DetailActivity.this, MainActivity.PLACEHOLDER_IMAGE));
                 createKeyShares.generateKeyShares();
                 DetailActivity.this.runOnUiThread(new Runnable() {
                     public void run() {

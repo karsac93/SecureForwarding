@@ -4,10 +4,13 @@ import android.util.Log;
 
 import com.backblaze.erasure.ReedSolomon;
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
+import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
+import com.example.home.secureforwarding.MainActivity;
+import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -28,6 +31,7 @@ public class CreateDataShares {
     byte[] signature, pvt_key;
     String destId;
     int DATA_SHARDS, PARITY_SHARDS, TOTAL_SHARDS;
+    String placeholderImage;
 
     private static final String TAG = CreateDataShares.class.getSimpleName();
 
@@ -99,6 +103,26 @@ public class CreateDataShares {
             signature = SingletoneECPRE.getInstance().SignMessage(shards[i], pvt_key);
             shares = new DataShares(deviceID, destId, i, KeyConstant.OWNER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
                     null, shards[i]);
+//            if(i == 0 || i == 1){
+//                DataShares tempShares = new DataShares("4_1", "15",i, KeyConstant.INTER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
+//                        null, shards[i]);
+//                database.dao().insertDataShares(tempShares);
+//            }
+//            else if(i == 2 || i == 3){
+//                DataShares tempShares = new DataShares("4_2", "2",i, KeyConstant.INTER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
+//                        null, shards[i]);
+//                database.dao().insertDataShares(tempShares);
+//            }
+//            else if(i == 4 || i == 5){
+//                if(database.dao().checkCompleteFileRowExistsForMsg("10_2", KeyConstant.DEST_TYPE) == 0){
+//                    CompleteFiles completeFiles = new CompleteFiles("10_2",
+//                            KeyConstant.DEST_TYPE, deviceID, placeholderImage);
+//                    database.dao().insertCompleteFile(completeFiles);
+//                }
+//                DataShares tempShares = new DataShares("10_2", "1",i, KeyConstant.DEST_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
+//                        null, shards[i]);
+//                database.dao().insertDataShares(tempShares);
+//            }
             database.dao().insertDataShares(shares);
         }
 
@@ -118,5 +142,7 @@ public class CreateDataShares {
         return secrets;
     }
 
-
+    public void setPlaceholderImage(String placeholderImage) {
+        this.placeholderImage = placeholderImage;
+    }
 }
