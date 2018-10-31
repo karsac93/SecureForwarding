@@ -2,25 +2,30 @@ package com.example.home.secureforwarding.KeyHandler;
 
 import android.util.Log;
 
+import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
 import com.example.home.secureforwarding.Entities.KeyShares;
+import com.example.home.secureforwarding.Entities.SecretStore;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.Key;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 public class DecipherKeyShare {
     public static final String TAG = DecipherKeyShare.class.getSimpleName();
     List<KeyShares> obtainedShares;
     List<SecretShare> secretShares = new ArrayList<>();
+    AppDatabase appDatabase;
 
-    public DecipherKeyShare(List<KeyShares> keyShares) {
+    public DecipherKeyShare(List<KeyShares> keyShares, AppDatabase appDatabase) {
         this.obtainedShares = keyShares;
-        decipher();
+        this.appDatabase = appDatabase;
     }
 
-    private void decipher() {
+    public SecretStore decipher() {
         for (KeyShares data : obtainedShares) {
             byte[] keyShare = new byte[KeyConstant.keyByteLenght];
             System.arraycopy(data.getData(), 0, keyShare, 0, KeyConstant.keyByteLenght);
@@ -44,22 +49,36 @@ public class DecipherKeyShare {
             try {
                 thisShare.setHash(new String(hash, "UTF-8"));
                 Log.d(TAG, "Key Hash:" + thisShare.getHash());
+
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
             secretShares.add(thisShare);
         }
+
+
         SecretShare[] secretShares1 = new SecretShare[secretShares.size()];
-        int i=0;
-        for(SecretShare secretShare : secretShares){
+        int i = 0;
+        for (SecretShare secretShare : secretShares) {
             secretShares1[i] = secretShare;
             i++;
         }
         RSecretShare rss = new RSecretShare(KeyConstant.keyShareK, KeyConstant.keyShareN);
         BigInteger[] retrievedInfo = rss.ReconstructShare(secretShares1);
-        for(BigInteger info : retrievedInfo){
-            byte[] byteInfo = info.toByteArray();
-            Log.d(TAG, "---------Hidden message---------:" + new String(byteInfo) + " length:" + byteInfo.length);
-        }
+        byte[] aesKey = retrievedInfo[0].toByteArray();
+        String dataShareInfo = new String(retrievedInfo[1].toByteArray());
+        dataShareInfo = dataShareInfo.substring(0, dataShareInfo.lastIndexOf(";"));
+        Log.d(TAG, "aes Key:" + new String(aesKey) + "data share info:" + dataShareInfo);
+        String[] k_n = dataShareInfo.split(";");
+        int k = Integer.parseInt(k_n[0].substring(k_n[0].indexOf("=")+1));
+        int n = Integer.parseInt(k_n[1].substring(k_n[1].indexOf("=")+1));
+        SecretStore secretStore = new SecretStore(obtainedShares.get(0).getMsg_id(),
+                k, n, aesKey, false);
+        Log.d(TAG, "k=" + k + " N=" + n);
+        appDatabase.dao().insertSecretStore(secretStore);
+        Log.d(TAG, "inserted secret store successfully!");
+        return secretStore;
     }
+
+
 }

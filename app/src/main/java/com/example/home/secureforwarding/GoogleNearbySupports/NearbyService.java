@@ -43,10 +43,13 @@ public class NearbyService extends Service {
     public static final String TAG = NearbyService.class.getSimpleName();
     public static String SERVICE_ID = "secure_forwarding";
     static String NICKNAME = "XSFX";
-    public static final int HANDLE_DELAY = 2000;
+    public static final int HANDLE_DELAY = 5000;
     ArrayList<String> previousConnectedDeviceId = new ArrayList<>();
+    public static final String MSG_RECIVED = "msg_received";
     boolean flag = false;
+    boolean receivedMsg = false;
     AppDatabase appDatabase;
+    boolean destroyed;
 
     public NearbyService() {
     }
@@ -61,15 +64,19 @@ public class NearbyService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "Service is destroyed!");
+        destroyed = true;
         Nearby.getConnectionsClient(getApplicationContext()).stopAdvertising();
         Nearby.getConnectionsClient(getApplicationContext()).stopDiscovery();
         Nearby.getConnectionsClient(getApplicationContext()).stopAllEndpoints();
+        previousConnectedDeviceId.clear();
+        setFlagsFalse();
         adverDiscoverHandler.removeCallbacks(adverDiscoverRunnable);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Service is started!");
+        destroyed = false;
         Nearby.getConnectionsClient(getApplicationContext()).stopAllEndpoints();
         appDatabase = AppDatabase.getAppDatabase(this);
         adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
@@ -92,6 +99,7 @@ public class NearbyService extends Service {
      */
     private void startAdverstisingDiscovery() {
         Log.d(TAG, "Inside ad and dis method!");
+        Toast.makeText(this, "Searching for nearby devices!", Toast.LENGTH_SHORT).show();
         Nearby.getConnectionsClient(getApplicationContext()).stopAdvertising();
         Nearby.getConnectionsClient(getApplicationContext()).stopDiscovery();
         Nearby.getConnectionsClient(getApplicationContext()).stopAllEndpoints();
@@ -124,26 +132,36 @@ public class NearbyService extends Service {
             switch (result.getStatus().getStatusCode()) {
                 case ConnectionsStatusCodes.STATUS_OK:
                     Log.d(TAG, "Connection successfully created with :" + endpointId);
+                    adverDiscoverHandler.removeCallbacks(adverDiscoverRunnable);
                     Metadata metadata = new Metadata(SharedPreferenceHandler.getStringValues(getApplicationContext(), MainActivity.DEVICE_ID)
                             , SingletoneECPRE.getInstance().pubKey);
                     sendStream(endpointId, metadata);
                     break;
                 case ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED:
                     Log.d(TAG, "Connection Failed");
+                    if(destroyed == false) {
+                        setFlagsFalse();
+                        adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
+                    }
                     break;
                 default:
                     Log.d(TAG, "Connection broken");
                     Toast.makeText(NearbyService.this,
                             "Connection broken, searching nearby devices again!", Toast.LENGTH_SHORT).show();
-                    flag = false;
-                    adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
+                    if(destroyed == false) {
+                        setFlagsFalse();
+                        adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
+                    }
             }
         }
 
         @Override
         public void onDisconnected(@NonNull String s) {
             Log.d(TAG, "Disconnected");
-
+            if(destroyed == false) {
+                setFlagsFalse();
+                adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
+            }
         }
     };
 
@@ -176,7 +194,7 @@ public class NearbyService extends Service {
                         if (!previousConnectedDeviceId.contains(metadata.deviceId)) {
                             appDatabase.dao().insertKeyStore(new KeyStore(metadata.deviceId, metadata.devicePubKey));
                             previousConnectedDeviceId.add(metadata.deviceId);
-                            Log.d(TAG, "connected device Id:" + metadata.deviceId);
+                            Toast.makeText(NearbyService.this, "Connected to the nearby device, device id:" + metadata.deviceId, Toast.LENGTH_SHORT).show();
                             P2PHandler p2PHandler = new P2PHandler(metadata.deviceId,
                                     metadata.devicePubKey, getApplicationContext());
                             sendStream(endpointId, p2PHandler.fetchFilesToSend());
@@ -184,14 +202,24 @@ public class NearbyService extends Service {
                         } else {
                             quitConnection(endpointId);
                         }
-                    }
-                    else if(receivedObj.getClass().equals(SharesPOJO.class)){
+                    } else if (receivedObj.getClass().equals(SharesPOJO.class)) {
+                        receivedMsg = true;
                         SharesPOJO sharesPOJO = (SharesPOJO) receivedObj;
-                        new IncomingMsgHandler(getApplicationContext(), sharesPOJO);
+                        IncomingMsgHandler incomingMsgHandler = new IncomingMsgHandler(getApplicationContext(), sharesPOJO);
+                        Thread thread = new Thread(incomingMsgHandler);
+                        thread.start();
+                        Nearby.getConnectionsClient(getApplicationContext()).
+                                sendPayload(endpointId, Payload.fromBytes(MSG_RECIVED.getBytes()));
 
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
+                }
+            }
+            if(payload.getType() == Payload.Type.BYTES){
+                if(receivedMsg == true){
+                    Toast.makeText(NearbyService.this, "File transferred!", Toast.LENGTH_SHORT).show();
+                    quitConnection(endpointId);
                 }
             }
         }
@@ -203,8 +231,8 @@ public class NearbyService extends Service {
     };
 
     private void quitConnection(String endpointId) {
+        setFlagsFalse();
         Nearby.getConnectionsClient(getApplicationContext()).disconnectFromEndpoint(endpointId);
-        flag = false;
         adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
     }
 
@@ -225,8 +253,16 @@ public class NearbyService extends Service {
 
         @Override
         public void onEndpointLost(@NonNull String s) {
-            flag = false;
-            startAdverstisingDiscovery();
+            if(destroyed == false) {
+                setFlagsFalse();
+                adverDiscoverHandler.removeCallbacks(adverDiscoverRunnable);
+                adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
+            }
         }
     };
+
+    private void setFlagsFalse(){
+        flag = false;
+        receivedMsg = false;
+    }
 }

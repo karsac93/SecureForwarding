@@ -103,23 +103,21 @@ public class CreateDataShares {
             signature = SingletoneECPRE.getInstance().SignMessage(shards[i], pvt_key);
             shares = new DataShares(deviceID, destId, i, KeyConstant.OWNER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
                     null, shards[i]);
-//            if(i == 0 || i == 1){
-//                DataShares tempShares = new DataShares("4_1", "15",i, KeyConstant.INTER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
+//            if (i == 0 || i == 1) {
+//                DataShares tempShares = new DataShares("4_1", "15", i, KeyConstant.INTER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
 //                        null, shards[i]);
 //                database.dao().insertDataShares(tempShares);
-//            }
-//            else if(i == 2 || i == 3){
-//                DataShares tempShares = new DataShares("4_2", "2",i, KeyConstant.INTER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
+//            } else if (i == 2 || i == 3) {
+//                DataShares tempShares = new DataShares("4_2", "2", i, KeyConstant.INTER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
 //                        null, shards[i]);
 //                database.dao().insertDataShares(tempShares);
-//            }
-//            else if(i == 4 || i == 5){
-//                if(database.dao().checkCompleteFileRowExistsForMsg("10_2", KeyConstant.DEST_TYPE) == 0){
+//            } else if (i == 4 || i == 5) {
+//                if (database.dao().checkCompleteFileRowExistsForMsg("10_2", KeyConstant.DEST_TYPE) == 0) {
 //                    CompleteFiles completeFiles = new CompleteFiles("10_2",
-//                            KeyConstant.DEST_TYPE, deviceID, placeholderImage);
+//                            KeyConstant.DEST_TYPE, deviceID.substring(0, deviceID.indexOf("_")), placeholderImage);
 //                    database.dao().insertCompleteFile(completeFiles);
 //                }
-//                DataShares tempShares = new DataShares("10_2", "1",i, KeyConstant.DEST_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
+//                DataShares tempShares = new DataShares("10_2", "1", i, KeyConstant.DEST_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
 //                        null, shards[i]);
 //                database.dao().insertDataShares(tempShares);
 //            }
@@ -132,12 +130,10 @@ public class CreateDataShares {
         byte[] secret = new byte[KeyConstant.keyByteLenght];
         Arrays.fill(secret, (byte) 1);
         byte[] dataInfo;
-        if (DATA_SHARDS != 4 || PARITY_SHARDS != 2) {
-            String Stringsecret = "dy=" + String.valueOf(DATA_SHARDS) + ";py=" + PARITY_SHARDS + ";";
-            dataInfo = Stringsecret.getBytes();
-            System.arraycopy(dataInfo, 0, secret, 0, dataInfo.length);
-            Log.d(TAG, "Important observation:" + secret.length + " secret msg:" + new String(secret));
-        }
+        String Stringsecret = "dy=" + String.valueOf(DATA_SHARDS) + ";py=" + PARITY_SHARDS + ";";
+        dataInfo = Stringsecret.getBytes();
+        System.arraycopy(dataInfo, 0, secret, 0, dataInfo.length);
+        Log.d(TAG, "Important observation:" + secret.length + " secret msg:" + new String(secret));
         secrets[1] = secret;
         return secrets;
     }

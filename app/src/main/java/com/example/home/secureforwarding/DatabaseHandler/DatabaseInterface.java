@@ -11,11 +11,14 @@ import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.Entities.KeyStore;
+import com.example.home.secureforwarding.Entities.SecretStore;
 
 import java.util.List;
 
 @Dao
 public interface DatabaseInterface {
+
+    // Insert queries
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertCompleteFile(CompleteFiles completeFiles);
 
@@ -28,12 +31,24 @@ public interface DatabaseInterface {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertKeyStore(KeyStore keyStore);
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertSecretStore(SecretStore secretStore);
+
+
+    // Update queries
     @Update(onConflict = OnConflictStrategy.REPLACE)
     void updateDataShare(DataShares dataShare);
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
     void updateKeyShare(KeyShares shares);
 
+    @Update(onConflict = OnConflictStrategy.REPLACE)
+    void updateCompleteFile(CompleteFiles completeFiles);
+
+    @Update(onConflict = OnConflictStrategy.REPLACE)
+    void updateSecretStore(SecretStore secretStore);
+
+    // Select queries
     @Query("select * from completefiles where type=:type")
     List<CompleteFiles> fetchCompleteFiles(String type);
 
@@ -60,8 +75,8 @@ public interface DatabaseInterface {
 
     @Query("select * from keyshares where file_id in (select min(file_id) from keyshares " +
             "where status=:status and " +
-            "file_id not in (select file_id from keyshares where encrypted_node_num=:nodeId and" +
-            " dest_id<>:nodeId) and node_type<>:destType group by msg_id)")
+            "msg_id not in (select msg_id from keyshares where encrypted_node_num=:nodeId and" +
+            " dest_id=:nodeId) and node_type<>:destType group by msg_id)")
     List<KeyShares> getKeySharesForThisDevice(int status, String nodeId, String destType);
 
     @Query("select * from keyshares where file_id in (select min(file_id) from keyshares " +
@@ -85,6 +100,13 @@ public interface DatabaseInterface {
     @Query("select count(*) from completefiles where id=:msg_id and type=:destType")
     int checkCompleteFileRowExistsForMsg(String msg_id, String destType);
 
+    @Query("select * from completefiles where id=:msgId")
+    CompleteFiles getCompleteFileforMsg(String msgId);
+
+    @Query("select * from secretstore where msg_id=:msgId")
+    SecretStore getSecretStoreForMsg(String msgId);
+
+    //Delete queries
     @Delete
     void deleteCompleteFileId(CompleteFiles completeFiles);
 
@@ -93,6 +115,14 @@ public interface DatabaseInterface {
 
     @Query("delete from datashares where msg_id=:msg_id")
     void deleteDataSharesForMsg(String msg_id);
+
+    //Testing queries
+    @Query("select * from keyshares limit 4")
+    List<KeyShares> getTestShares();
+
+    @Query("select * from datashares limit 4")
+    List<DataShares> getTestDataShares();
+
 
 
 }

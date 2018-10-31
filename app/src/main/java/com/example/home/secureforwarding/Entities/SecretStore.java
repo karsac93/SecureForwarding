@@ -44,16 +44,32 @@ public class SecretStore {
         return msg_id;
     }
 
+    public void setMsg_id(@NonNull String msg_id) {
+        this.msg_id = msg_id;
+    }
+
     public int getKnum() {
         return Knum;
+    }
+
+    public void setKnum(int knum) {
+        Knum = knum;
     }
 
     public int getNnum() {
         return Nnum;
     }
 
+    public void setNnum(int nnum) {
+        Nnum = nnum;
+    }
+
     public byte[] getAesKey() {
         return aesKey;
+    }
+
+    public void setAesKey(byte[] aesKey) {
+        this.aesKey = aesKey;
     }
 
     @NonNull

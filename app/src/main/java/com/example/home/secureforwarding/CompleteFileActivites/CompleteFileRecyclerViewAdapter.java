@@ -7,8 +7,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileFragment.OnListFragmentInteractionListener;
@@ -44,8 +46,18 @@ public class CompleteFileRecyclerViewAdapter extends RecyclerView.Adapter<Comple
             Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
             holder.imageView.setImageBitmap(bitmap);
             holder.fileName.setText(file.getName());
+            if(file.getName().contains("placeholder"))
+                holder.fileName.setText(holder.completeFiles.getId() + ".jpg");
             holder.destId.setText(holder.completeFiles.getDestId());
+            Log.d(TAG, "file name:" + file.getName() + " destId:" + holder.completeFiles.getDestId());
         }
+
+        holder.imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG, "hahahaaa");
+            }
+        });
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -66,7 +78,7 @@ public class CompleteFileRecyclerViewAdapter extends RecyclerView.Adapter<Comple
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
-        public final ImageView imageView;
+        public final ImageButton imageView;
         public final TextView fileName;
         public final TextView destId;
         public CompleteFiles completeFiles;

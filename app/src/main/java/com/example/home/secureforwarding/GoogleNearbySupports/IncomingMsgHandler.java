@@ -7,10 +7,13 @@ import android.os.Environment;
 import android.util.Base64;
 import android.util.Log;
 
+import com.example.home.secureforwarding.DataHandler.DecipherDataShares;
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
 import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.Entities.KeyShares;
+import com.example.home.secureforwarding.Entities.SecretStore;
+import com.example.home.secureforwarding.KeyHandler.DecipherKeyShare;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.MainActivity;
 import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
@@ -20,26 +23,29 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-public class IncomingMsgHandler {
+public class IncomingMsgHandler  implements Runnable{
     private static final String TAG = IncomingMsgHandler.class.getSimpleName();
     Context context;
     SharesPOJO sharesPOJO;
     AppDatabase appDatabase;
+    Set<String> destMsgIds;
 
     public IncomingMsgHandler(Context context, SharesPOJO sharesPOJO) {
         this.context = context;
         this.sharesPOJO = sharesPOJO;
         appDatabase = AppDatabase.getAppDatabase(context);
-        handleMessages(sharesPOJO);
     }
 
     private void handleMessages(SharesPOJO sharesPOJO) {
         handleCompleteFiles(sharesPOJO.completeFilesToSend);
         handleKeyShares(sharesPOJO.keySharesToSend);
+        destMsgIds = new HashSet<>();
         handleDataShares(sharesPOJO.dataSharesToSend);
     }
 
@@ -48,7 +54,9 @@ public class IncomingMsgHandler {
         for (DataShares dataShare : dataSharesToSend) {
             if (dataShare.getDestId().equals(deviceId)) {
                 if (appDatabase.dao().checkCompleteFilealreadyPresent(dataShare.getMsg_id(), KeyConstant.DEST_TYPE, true) == 0) {
+                    destMsgIds.add(dataShare.getMsg_id());
                     if(appDatabase.dao().checkCompleteFileRowExistsForMsg(dataShare.getMsg_id(), KeyConstant.DEST_TYPE) == 0){
+                        destMsgIds.remove(dataShare.getMsg_id());
                         CompleteFiles completeFiles = new CompleteFiles(dataShare.getMsg_id(),
                                 KeyConstant.DEST_TYPE, deviceId, SharedPreferenceHandler.getStringValues(context, MainActivity.PLACEHOLDER_IMAGE));
                         appDatabase.dao().insertCompleteFile(completeFiles);
@@ -60,10 +68,35 @@ public class IncomingMsgHandler {
                 }
             } else {
                 dataShare.setSenderInfo("NA");
-                dataShare.setType(KeyConstant.DEST_TYPE);
+                dataShare.setType(KeyConstant.INTER_TYPE);
                 dataShare.setStatus(KeyConstant.NOT_SENT_STATUS);
                 appDatabase.dao().insertDataShares(dataShare);
             }
+        }
+        keyDecyption();
+    }
+
+    private void keyDecyption() {
+        for(String msg_id : destMsgIds){
+            SecretStore secretStore = appDatabase.dao().getSecretStoreForMsg(msg_id);
+            if(secretStore == null){
+                List<KeyShares> keyShares = appDatabase.dao().getKeyShareForMsg(msg_id);
+                if(keyShares.size() >= KeyConstant.keyShareK){
+                    DecipherKeyShare decipherKeyShare = new DecipherKeyShare(keyShares, appDatabase);
+                    secretStore = decipherKeyShare.decipher();
+                    dataDecyption(secretStore);
+                }
+            }
+            else {
+                dataDecyption(secretStore);
+            }
+        }
+    }
+
+    private void dataDecyption(SecretStore secretStore) {
+        List<DataShares> dataShares = appDatabase.dao().getDataShareForMsg(secretStore.getMsg_id());
+        if(dataShares.size() >= secretStore.getKnum()){
+            new DecipherDataShares(appDatabase, secretStore, dataShares);
         }
     }
 
@@ -145,4 +178,8 @@ public class IncomingMsgHandler {
         return file;
     }
 
+    @Override
+    public void run() {
+        handleMessages(sharesPOJO);
+    }
 }

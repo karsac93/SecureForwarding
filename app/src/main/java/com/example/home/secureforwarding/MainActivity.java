@@ -26,6 +26,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -113,7 +114,15 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.setVmPolicy(builder.build());
         checkDeviceId();
         initializeEcpre();
-        if(SharedPreferenceHandler.getStringValues(this, PLACEHOLDER_IMAGE).length() == 0){
+        if (SharedPreferenceHandler.getStringValues(this, PLACEHOLDER_IMAGE).length() == 0) {
+            checkWritePermission();
+        }
+    }
+
+    private void checkWritePermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0024);
+        } else {
             createAndSavePlaceHolder();
         }
     }
@@ -185,22 +194,26 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.data_decoding:
                 Log.d(TAG, "Good inside data decoding");
-                View view = getLayoutInflater().inflate(R.layout.custom_popup, null);
+                final View view = getLayoutInflater().inflate(R.layout.custom_popup, null);
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Choose Action");
                 builder.setView(view);
+                final RadioGroup radioGroup = view.findViewById(R.id.radioGroup2);
                 builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        boolean dataSkip = false;
+                        int id = radioGroup.getCheckedRadioButtonId();
+                        if (id == R.id.skipBtn)
+                            dataSkip = true;
                         SharedPreferenceHandler.setBooleanValue(MainActivity.this,
-                                DATA_DECODE_SKIP, true);
+                                DATA_DECODE_SKIP, dataSkip);
+                        Log.d(TAG, "Value selected is :" + dataSkip);
                     }
                 });
                 builder.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        SharedPreferenceHandler.setBooleanValue(MainActivity.this,
-                                DATA_DECODE_SKIP, false);
                     }
                 });
                 builder.create();
@@ -372,6 +385,14 @@ public class MainActivity extends AppCompatActivity {
                     }
                     createFile();
                     saveImage();
+                }
+                break;
+            case 0024:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    createAndSavePlaceHolder();
+                } else {
+                    Toast.makeText(this, "Provide the write permission to create placeholder image!"
+                            , Toast.LENGTH_SHORT).show();
                 }
                 break;
         }
