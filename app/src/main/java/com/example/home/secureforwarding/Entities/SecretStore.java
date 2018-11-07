@@ -26,6 +26,10 @@ public class SecretStore {
     @ColumnInfo(name = "status")
     boolean status;
 
+    @NonNull
+    @ColumnInfo(name = "signature")
+    byte[] signature;
+
     @Ignore
     public SecretStore(@NonNull String msg_id, int knum, int nnum, byte[] aesKey, boolean status) {
         this.msg_id = msg_id;
@@ -35,7 +39,7 @@ public class SecretStore {
         this.status = status;
     }
 
-    public SecretStore(){
+    public SecretStore() {
 
     }
 
@@ -79,5 +83,14 @@ public class SecretStore {
 
     public void setStatus(@NonNull boolean status) {
         this.status = status;
+    }
+
+    @NonNull
+    public byte[] getSignature() {
+        return signature;
+    }
+
+    public void setSignature(@NonNull byte[] signature) {
+        this.signature = signature;
     }
 }

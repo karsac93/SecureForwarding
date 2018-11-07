@@ -31,6 +31,8 @@ public class CompleteFileFragment extends Fragment {
 
     private OnListFragmentInteractionListener mListener;
 
+    private ShowImageListener showImageListener;
+
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -60,7 +62,7 @@ public class CompleteFileFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new CompleteFileRecyclerViewAdapter(completeFiles, mListener));
+            recyclerView.setAdapter(new CompleteFileRecyclerViewAdapter(completeFiles, mListener, showImageListener));
         }
         return view;
     }
@@ -71,6 +73,7 @@ public class CompleteFileFragment extends Fragment {
         super.onAttach(context);
         if (context instanceof OnListFragmentInteractionListener) {
             mListener = (OnListFragmentInteractionListener) context;
+            showImageListener = (ShowImageListener) context;
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnListKeyFragmentInteractionListener");
@@ -81,6 +84,7 @@ public class CompleteFileFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+        showImageListener = null;
     }
 
     /**
@@ -96,5 +100,9 @@ public class CompleteFileFragment extends Fragment {
     public interface OnListFragmentInteractionListener {
         // TODO: Update argument type and name
         void onListFragmentInteraction(CompleteFiles item);
+    }
+
+    public interface ShowImageListener{
+        void showImageListener(String filePath);
     }
 }

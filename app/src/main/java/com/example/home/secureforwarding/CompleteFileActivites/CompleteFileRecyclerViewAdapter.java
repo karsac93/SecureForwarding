@@ -1,5 +1,6 @@
 package com.example.home.secureforwarding.CompleteFileActivites;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.v7.widget.RecyclerView;
@@ -15,6 +16,7 @@ import android.widget.Toast;
 import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileFragment.OnListFragmentInteractionListener;
 import com.example.home.secureforwarding.R;
+import com.example.home.secureforwarding.ShowImageActivity;
 
 import java.io.File;
 import java.util.List;
@@ -23,11 +25,14 @@ public class CompleteFileRecyclerViewAdapter extends RecyclerView.Adapter<Comple
 
     private final List<CompleteFiles> mValues;
     private final OnListFragmentInteractionListener mListener;
+    private final CompleteFileFragment.ShowImageListener showImageListener;
     private static final String TAG = CompleteFileRecyclerViewAdapter.class.getSimpleName();
 
-    public CompleteFileRecyclerViewAdapter(List<CompleteFiles> completeFiles, OnListFragmentInteractionListener listener) {
+    public CompleteFileRecyclerViewAdapter(List<CompleteFiles> completeFiles, OnListFragmentInteractionListener listener,
+                                           CompleteFileFragment.ShowImageListener showImageListener) {
         mValues = completeFiles;
         mListener = listener;
+        this.showImageListener = showImageListener;
     }
 
     @Override
@@ -55,9 +60,10 @@ public class CompleteFileRecyclerViewAdapter extends RecyclerView.Adapter<Comple
         holder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "hahahaaa");
+                showImageListener.showImageListener(holder.completeFiles.getFilePath());
             }
         });
+
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override

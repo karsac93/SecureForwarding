@@ -4,8 +4,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.example.home.secureforwarding.DataHandler.DecipherDataShares;
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
@@ -29,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class IncomingMsgHandler  implements Runnable{
+public class IncomingMsgHandler implements Runnable, DecipherKeyShare.CorruptInfo {
     private static final String TAG = IncomingMsgHandler.class.getSimpleName();
     Context context;
     SharesPOJO sharesPOJO;
@@ -55,7 +58,7 @@ public class IncomingMsgHandler  implements Runnable{
             if (dataShare.getDestId().equals(deviceId)) {
                 if (appDatabase.dao().checkCompleteFilealreadyPresent(dataShare.getMsg_id(), KeyConstant.DEST_TYPE, true) == 0) {
                     destMsgIds.add(dataShare.getMsg_id());
-                    if(appDatabase.dao().checkCompleteFileRowExistsForMsg(dataShare.getMsg_id(), KeyConstant.DEST_TYPE) == 0){
+                    if (appDatabase.dao().checkCompleteFileRowExistsForMsg(dataShare.getMsg_id(), KeyConstant.DEST_TYPE) == 0) {
                         destMsgIds.remove(dataShare.getMsg_id());
                         CompleteFiles completeFiles = new CompleteFiles(dataShare.getMsg_id(),
                                 KeyConstant.DEST_TYPE, deviceId, SharedPreferenceHandler.getStringValues(context, MainActivity.PLACEHOLDER_IMAGE));
@@ -73,21 +76,28 @@ public class IncomingMsgHandler  implements Runnable{
                 appDatabase.dao().insertDataShares(dataShare);
             }
         }
-        keyDecyption();
+        try {
+            keyDecyption();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void keyDecyption() {
-        for(String msg_id : destMsgIds){
+        for (String msg_id : destMsgIds) {
             SecretStore secretStore = appDatabase.dao().getSecretStoreForMsg(msg_id);
-            if(secretStore == null){
+            if (secretStore == null) {
                 List<KeyShares> keyShares = appDatabase.dao().getKeyShareForMsg(msg_id);
-                if(keyShares.size() >= KeyConstant.keyShareK){
-                    DecipherKeyShare decipherKeyShare = new DecipherKeyShare(keyShares, appDatabase);
-                    secretStore = decipherKeyShare.decipher();
+                if (keyShares.size() >= KeyConstant.keyShareK) {
+                    DecipherKeyShare decipherKeyShare = new DecipherKeyShare(keyShares, appDatabase, IncomingMsgHandler.this);
+                    try {
+                        secretStore = decipherKeyShare.decipher();
+                    } catch (Exception e) {
+                        return;
+                    }
                     dataDecyption(secretStore);
                 }
-            }
-            else {
+            } else {
                 dataDecyption(secretStore);
             }
         }
@@ -95,7 +105,7 @@ public class IncomingMsgHandler  implements Runnable{
 
     private void dataDecyption(SecretStore secretStore) {
         List<DataShares> dataShares = appDatabase.dao().getDataShareForMsg(secretStore.getMsg_id());
-        if(dataShares.size() >= secretStore.getKnum()){
+        if (dataShares.size() >= secretStore.getKnum()) {
             new DecipherDataShares(appDatabase, secretStore, dataShares);
         }
     }
@@ -105,7 +115,7 @@ public class IncomingMsgHandler  implements Runnable{
         for (KeyShares keyshare : keySharesToSend) {
             if (keyshare.getDestId().equals(deviceId)) {
                 if (appDatabase.dao().checkCompleteFilealreadyPresent(keyshare.getMsg_id(), KeyConstant.DEST_TYPE, true) == 0) {
-                    if(appDatabase.dao().checkCompleteFileRowExistsForMsg(keyshare.getMsg_id(), KeyConstant.DEST_TYPE) == 0){
+                    if (appDatabase.dao().checkCompleteFileRowExistsForMsg(keyshare.getMsg_id(), KeyConstant.DEST_TYPE) == 0) {
                         CompleteFiles completeFiles = new CompleteFiles(keyshare.getMsg_id(),
                                 KeyConstant.DEST_TYPE, deviceId, SharedPreferenceHandler.getStringValues(context, MainActivity.PLACEHOLDER_IMAGE));
                         appDatabase.dao().insertCompleteFile(completeFiles);
@@ -182,4 +192,17 @@ public class IncomingMsgHandler  implements Runnable{
     public void run() {
         handleMessages(sharesPOJO);
     }
+
+    @Override
+    public void displayCorruptInfo(final String nums, final String msg_id) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "Here in interface");
+                Toast.makeText(context, "key share(s) " + nums + " is/are corrupted for the msg " + msg_id + "!", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
 }

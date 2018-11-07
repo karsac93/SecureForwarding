@@ -10,11 +10,13 @@ import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.R;
 import com.example.home.secureforwarding.ShareFileActivites.ShareFilesActivity;
+import com.example.home.secureforwarding.ShowImageActivity;
 
-public class CompleteFileActivity extends AppCompatActivity implements CompleteFileFragment.OnListFragmentInteractionListener {
+public class CompleteFileActivity extends AppCompatActivity implements CompleteFileFragment.OnListFragmentInteractionListener, CompleteFileFragment.ShowImageListener {
 
     public static final String MSG_ID = "msg_id";
     public static final String DISPLAY_INFO = "displayinfo";
+    public static final String FILEPATH = "filepath";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +49,13 @@ public class CompleteFileActivity extends AppCompatActivity implements CompleteF
         Intent intent = new Intent(this, ShareFilesActivity.class);
         intent.putExtra(ShareFilesActivity.INTENT_ACTION, ShareFilesActivity.COMPLETE_ACTION);
         intent.putExtra(MSG_ID, item.getId());
+        startActivity(intent);
+    }
+
+    @Override
+    public void showImageListener(String filePath) {
+        Intent intent = new Intent(this, ShowImageActivity.class);
+        intent.putExtra(FILEPATH, filePath);
         startActivity(intent);
     }
 }

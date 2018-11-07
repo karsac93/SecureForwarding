@@ -85,6 +85,8 @@ public class CreateKeyShares {
                 System.arraycopy(node.sibling.hash, 0, keyShares.get(i), 32 + j * AEScrypto.hashLenght, AEScrypto.hashLenght);
                 node = node.parent;
             }
+            byte[] b = new byte[AEScrypto.hashLenght];
+            new Random().nextBytes(b);
         }
 
         //each share is encrypted using EC and updated in the database
@@ -93,7 +95,7 @@ public class CreateKeyShares {
             //byte[] cipher_data = SingletoneECPRE.getInstance().Encryption(keyShares.get(i));
             dbShare = new KeyShares(device_msg_id, destId, shares[i].getNumber(), nodeType,
                     KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i), null, null);
-//
+
 //            if (i == 0 || i == 1) {
 //                KeyShares dbShare1 = new KeyShares("4_1", String.valueOf(15), shares[i].getNumber(), KeyConstant.INTER_TYPE,
 //                        KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i), null, null);

@@ -38,6 +38,7 @@ import java.io.ObjectOutputStream;
 import java.security.Key;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class NearbyService extends Service {
     public static final String TAG = NearbyService.class.getSimpleName();
@@ -50,6 +51,7 @@ public class NearbyService extends Service {
     boolean receivedMsg = false;
     AppDatabase appDatabase;
     boolean destroyed;
+    boolean requested = false;
 
     public NearbyService() {
     }
@@ -71,6 +73,7 @@ public class NearbyService extends Service {
         previousConnectedDeviceId.clear();
         setFlagsFalse();
         adverDiscoverHandler.removeCallbacks(adverDiscoverRunnable);
+        checkRequestHandler.removeCallbacks(checkRequestRunnable);
     }
 
     @Override
@@ -117,14 +120,15 @@ public class NearbyService extends Service {
             if (connectionInfo.isIncomingConnection() && connectionInfo.getEndpointName().contains(NICKNAME)) {
                 Log.d(TAG, "device_id name:" + connectionInfo.getEndpointName());
                 flag = true;
-                Nearby.getConnectionsClient(getApplicationContext()).stopDiscovery();
-                Nearby.getConnectionsClient(getApplicationContext()).stopAdvertising();
                 Nearby.getConnectionsClient(getApplicationContext())
                         .acceptConnection(endpointId, payloadCallback);
             } else {
                 Nearby.getConnectionsClient(getApplicationContext())
                         .acceptConnection(endpointId, payloadCallback);
             }
+            Nearby.getConnectionsClient(getApplicationContext()).stopDiscovery();
+            Nearby.getConnectionsClient(getApplicationContext()).stopAdvertising();
+            requested = false;
         }
 
         @Override
@@ -242,12 +246,16 @@ public class NearbyService extends Service {
             if (discoveredEndpointInfo.getServiceId().equals(SERVICE_ID)) {
                 flag = true;
                 Log.d(TAG, "Discovered endpoint name:" + discoveredEndpointInfo.getEndpointName());
-                Nearby.getConnectionsClient(getApplicationContext()).stopDiscovery();
-                Nearby.getConnectionsClient(getApplicationContext()).stopAdvertising();
                 Log.d(TAG, "Requesting connection!");
+                adverDiscoverHandler.removeCallbacks(adverDiscoverRunnable);
                 Nearby.getConnectionsClient(getApplicationContext())
                         .requestConnection(discoveredEndpointInfo.getEndpointName(),
                                 endpointId, connectionLifecycleCallback);
+                requested = true;
+                Random r = new Random();
+                int next = r.nextInt(1000) + 4000;
+                checkRequestHandler.postDelayed(checkRequestRunnable, next);
+
             }
         }
 
@@ -265,4 +273,17 @@ public class NearbyService extends Service {
         flag = false;
         receivedMsg = false;
     }
+
+    Handler checkRequestHandler = new Handler();
+
+    Runnable checkRequestRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if(requested == true){
+                requested = false;
+                Log.d(TAG, "inside checkrequestRunnable!");
+                adverDiscoverHandler.post(adverDiscoverRunnable);
+            }
+        }
+    };
 }

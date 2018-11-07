@@ -38,7 +38,7 @@ public class P2PHandler implements Serializable {
     public SharesPOJO fetchFilesToSend() {
 //        HashMap<String, String> completeFiles = getCompleteFiles();
 //        List<KeyShares> keyShares = appDatabase.dao().getKeySharesForThisDevice(KeyConstant.NOT_SENT_STATUS, id, KeyConstant.DEST_TYPE);
-//        keyShares.addAll(appDatabase.dao().getKeySharesEncryptedWithDevice(KeyConstant.NOT_SENT_STATUS, id));
+//        keyShares.addAll(appDatabase.dao().getKeySharesEncryptedWithDevice(KeyConstant.NOT_SENT_STATUS, id, KeyConstant.DEST_TYPE));
 //        keyShares.addAll(appDatabase.dao().getKeySharesForDestDevice(KeyConstant.DEST_TYPE, id, KeyConstant.NOT_SENT_STATUS));
 //        for(KeyShares keyShare : keyShares){
 //            if(keyShare.getEncryptedNodeNum() == null) {
@@ -59,33 +59,33 @@ public class P2PHandler implements Serializable {
     }
 
     private List<DataShares> getDataShares(String id) {
-//        List<DataShares> dataShares = new ArrayList<>();
-//        dataShares.addAll(appDatabase.dao().getDataSharesForThisDevice(
-//                KeyConstant.NOT_SENT_STATUS, KeyConstant.DEST_TYPE, id));
-//        dataShares.addAll(appDatabase.dao().getDataSharesForThisDestDevice(
-//                KeyConstant.NOT_SENT_STATUS, KeyConstant.DEST_TYPE, id));
-//        for(DataShares dataShare : dataShares){
-//            dataShare.setStatus(KeyConstant.SENT_STATUS);
-//            dataShare.setSenderInfo(id);
-//            appDatabase.dao().updateDataShare(dataShare);
-//        }
-//        return dataShares;
-        return null;
+        List<DataShares> dataShares = new ArrayList<>();
+        dataShares.addAll(appDatabase.dao().getDataSharesForThisDevice(
+                KeyConstant.NOT_SENT_STATUS, KeyConstant.DEST_TYPE, id));
+        dataShares.addAll(appDatabase.dao().getDataSharesForThisDestDevice(
+                KeyConstant.NOT_SENT_STATUS, KeyConstant.DEST_TYPE, id));
+        for(DataShares dataShare : dataShares){
+            dataShare.setStatus(KeyConstant.SENT_STATUS);
+            dataShare.setSenderInfo(id);
+            appDatabase.dao().updateDataShare(dataShare);
+        }
+        return dataShares;
+//        return null;
 
     }
 
     private HashMap<String, String> getCompleteFiles() {
         HashMap<String, String> mapCompleteFiles = new HashMap<>();
-//        List<CompleteFiles> completeFiles = appDatabase.dao().getCompleteFilesForDevice(KeyConstant.OWNER_TYPE, id);
-//        for(CompleteFiles completeFile : completeFiles){
-//            appDatabase.dao().deleteDataSharesForMsg(completeFile.getId());
-//            appDatabase.dao().deleteKeySharesForMsg(completeFile.getId());
-//            appDatabase.dao().deleteCompleteFileId(completeFile);
-//            Bitmap bitmap = BitmapFactory.decodeFile(completeFile.getFilePath());
-//            ByteArrayOutputStream byteArrayOS = new ByteArrayOutputStream();
-//            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOS);
-//            mapCompleteFiles.put(completeFile.getId(), Base64.encodeToString(byteArrayOS.toByteArray(), Base64.DEFAULT));
-//        }
+        List<CompleteFiles> completeFiles = appDatabase.dao().getCompleteFilesForDevice(KeyConstant.OWNER_TYPE, id);
+        for(CompleteFiles completeFile : completeFiles){
+            appDatabase.dao().deleteDataSharesForMsg(completeFile.getId());
+            appDatabase.dao().deleteKeySharesForMsg(completeFile.getId());
+            appDatabase.dao().deleteCompleteFileId(completeFile);
+            Bitmap bitmap = BitmapFactory.decodeFile(completeFile.getFilePath());
+            ByteArrayOutputStream byteArrayOS = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOS);
+            mapCompleteFiles.put(completeFile.getId(), Base64.encodeToString(byteArrayOS.toByteArray(), Base64.DEFAULT));
+        }
         return mapCompleteFiles;
     }
 

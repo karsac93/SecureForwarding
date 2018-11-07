@@ -76,12 +76,13 @@ public interface DatabaseInterface {
     @Query("select * from keyshares where file_id in (select min(file_id) from keyshares " +
             "where status=:status and " +
             "msg_id not in (select msg_id from keyshares where encrypted_node_num=:nodeId and" +
-            " dest_id=:nodeId) and node_type<>:destType group by msg_id)")
+            " dest_id<>:nodeId and status=:status) and node_type<>:destType group by msg_id)")
     List<KeyShares> getKeySharesForThisDevice(int status, String nodeId, String destType);
 
     @Query("select * from keyshares where file_id in (select min(file_id) from keyshares " +
-            "where status=:status and encrypted_node_num=:nodeId and dest_id<>:nodeId group by msg_id)")
-    List<KeyShares> getKeySharesEncryptedWithDevice(int status, String nodeId);
+            "where status=:status and encrypted_node_num=:nodeId and dest_id<>:nodeId and " +
+            "node_type<>:destType group by msg_id)")
+    List<KeyShares> getKeySharesEncryptedWithDevice(int status, String nodeId, String destType);
 
     @Query("select * from keyshares where node_type<>:nodeType and dest_id=:nodeId and status=:status")
     List<KeyShares> getKeySharesForDestDevice(String nodeType, String nodeId, int status);
@@ -115,6 +116,9 @@ public interface DatabaseInterface {
 
     @Query("delete from datashares where msg_id=:msg_id")
     void deleteDataSharesForMsg(String msg_id);
+
+    @Delete
+    void deleteKeyShare(KeyShares keyShares);
 
     //Testing queries
     @Query("select * from keyshares limit 4")
