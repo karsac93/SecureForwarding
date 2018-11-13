@@ -90,12 +90,15 @@ public class IncomingMsgHandler implements Runnable, DecipherKeyShare.CorruptInf
                 List<KeyShares> keyShares = appDatabase.dao().getKeyShareForMsg(msg_id);
                 if (keyShares.size() >= KeyConstant.keyShareK) {
                     DecipherKeyShare decipherKeyShare = new DecipherKeyShare(keyShares, appDatabase, IncomingMsgHandler.this);
+                    SecretStore secretStore1 = new SecretStore();
                     try {
-                        secretStore = decipherKeyShare.decipher();
+                        secretStore1 = decipherKeyShare.decipher();
                     } catch (Exception e) {
+                        e.printStackTrace();
+                        Log.d(TAG, "Some problem with key shares");
                         return;
                     }
-                    dataDecyption(secretStore);
+                    dataDecyption(secretStore1);
                 }
             } else {
                 dataDecyption(secretStore);
@@ -106,7 +109,12 @@ public class IncomingMsgHandler implements Runnable, DecipherKeyShare.CorruptInf
     private void dataDecyption(SecretStore secretStore) {
         List<DataShares> dataShares = appDatabase.dao().getDataShareForMsg(secretStore.getMsg_id());
         if (dataShares.size() >= secretStore.getKnum()) {
-            new DecipherDataShares(appDatabase, secretStore, dataShares);
+            try {
+                new DecipherDataShares(appDatabase, secretStore, dataShares, this);
+            }
+            catch (Exception e){
+                Log.d(TAG, "Think it has corrupted files!:" + e.getLocalizedMessage());
+            }
         }
     }
 

@@ -3,12 +3,10 @@ package com.example.home.secureforwarding.KeyHandler;
 import android.util.Log;
 
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
-import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.Entities.KeyShares;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Random;
 
 import static com.example.home.secureforwarding.KeyHandler.KeyConstant.KEY_TYPE;
 import static com.example.home.secureforwarding.KeyHandler.KeyConstant.NOT_SENT_STATUS;
@@ -52,19 +50,15 @@ public class CreateKeyShares {
         // Based on K, the size of hidden msg is calculated
         RSecretShare rss = new RSecretShare(KeyConstant.keyShareK, KeyConstant.keyShareN);
         BigInteger[] hiddenInfo = new BigInteger[KeyConstant.keyShareK - 2];
-        hiddenInfo[0] = new BigInteger(1, secrets[1]);
-        for (int i = 1; i < hiddenInfo.length; i++) {
-            byte[] b = new byte[KeyConstant.keyByteLenght];
-            new Random().nextBytes(b);
-            hiddenInfo[i] = new BigInteger(1, b);
-        }
+        hiddenInfo[0] = new BigInteger(1, secrets[0]);
+        hiddenInfo[1] = new BigInteger(1, secrets[1]);
 
         SecretShare[] shares = rss.CreateShare(new BigInteger(1, key), hiddenInfo);
         MerkleHashTree hashTree = new MerkleHashTree();
         ArrayList<byte[]> keyShares = new ArrayList<>();
         for (int i = 0; i < shares.length; i++) {
-            shares[i].setSignature(secrets[0]);
             byte[] thisShare = shares[i].getShare().toByteArray();
+            Log.d(TAG, "this share length:" + thisShare.length);
             byte[] keyShare = new byte[KeyConstant.keyByteLenght];
             if (thisShare.length > KeyConstant.keyByteLenght) {
                 System.arraycopy(thisShare, thisShare.length - KeyConstant.keyByteLenght, keyShare, 0, KeyConstant.keyByteLenght);
@@ -85,8 +79,6 @@ public class CreateKeyShares {
                 System.arraycopy(node.sibling.hash, 0, keyShares.get(i), 32 + j * AEScrypto.hashLenght, AEScrypto.hashLenght);
                 node = node.parent;
             }
-            byte[] b = new byte[AEScrypto.hashLenght];
-            new Random().nextBytes(b);
         }
 
         //each share is encrypted using EC and updated in the database

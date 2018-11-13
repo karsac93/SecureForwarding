@@ -4,6 +4,7 @@ apply plugin: 'com.google.gms.google-services'
 android {
     compileSdkVersion 27
     defaultConfig {
+        multiDexEnabled true
         applicationId "com.example.home.secureforwarding"
         minSdkVersion 19
         targetSdkVersion 27
@@ -42,4 +43,6 @@ dependencies {
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
     implementation 'com.google.android.gms:play-services-nearby:16.0.0'
     implementation 'com.google.firebase:firebase-database:16.0.3'
+    implementation 'com.squareup.picasso:picasso:2.71828'
+
 }

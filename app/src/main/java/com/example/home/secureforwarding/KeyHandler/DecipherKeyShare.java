@@ -82,7 +82,6 @@ public class DecipherKeyShare {
         Log.d(TAG, " flag:" + flag + " secretshare size:" + secretShares.size());
         if(flag && size < KeyConstant.keyShareK){
             String nums = s.substring(0, s.length()-1);
-            Log.d(TAG, "calling listener");
             corruptInfoListener.displayCorruptInfo(nums, obtainedShares.get(0).getMsg_id());
             return null;
         }
@@ -93,10 +92,12 @@ public class DecipherKeyShare {
             secretShares1[i] = secretShare;
             i++;
         }
+
         RSecretShare rss = new RSecretShare(KeyConstant.keyShareK, KeyConstant.keyShareN);
         BigInteger[] retrievedInfo = rss.ReconstructShare(secretShares1);
         byte[] aesKey = retrievedInfo[0].toByteArray();
-        String dataShareInfo = new String(retrievedInfo[1].toByteArray());
+        Log.d(TAG, "aes Key:" + new String(aesKey));
+        String dataShareInfo = new String(retrievedInfo[2].toByteArray());
         dataShareInfo = dataShareInfo.substring(0, dataShareInfo.lastIndexOf(";"));
         Log.d(TAG, "aes Key:" + new String(aesKey) + "data share info:" + dataShareInfo);
         String[] k_n = dataShareInfo.split(";");
@@ -104,7 +105,7 @@ public class DecipherKeyShare {
         int n = Integer.parseInt(k_n[1].substring(k_n[1].indexOf("=")+1));
         SecretStore secretStore = new SecretStore(obtainedShares.get(0).getMsg_id(),
                 k, n, aesKey, false);
-        secretStore.setSignature(secretShares.get(0).getSignature());
+        secretStore.setSignature(retrievedInfo[1].toByteArray());
         Log.d(TAG, "k=" + k + " N=" + n);
         appDatabase.dao().insertSecretStore(secretStore);
         Log.d(TAG, "inserted secret store successfully!");

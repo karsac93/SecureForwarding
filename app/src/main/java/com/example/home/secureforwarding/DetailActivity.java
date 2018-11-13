@@ -1,7 +1,5 @@
 package com.example.home.secureforwarding;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -22,6 +20,7 @@ import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.CreateKeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -134,22 +133,12 @@ public class DetailActivity extends AppCompatActivity {
         Log.d(TAG, "Obtained file:" + file.getName());
 
         prefRadioButtons.get(0).setChecked(true);
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-        Bitmap bitmap = null;
-        try {
-            bitmap = BitmapFactory.decodeStream(new FileInputStream(file), null, options);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        imageView.setImageBitmap(bitmap);
+        Picasso.get().load(file).fit().centerInside().into(imageView);
 
         List<KeyStore> destIds = database.dao().getKeyStores();
         ArrayAdapter<KeyStore> adapter = new ArrayAdapter<>(this,
                 android.R.layout.select_dialog_item, destIds);
         destId.setAdapter(adapter);
-//        if(adapter.getCount() > 0)
-//            destId.showDropDown();
 
         radioGroups.get(0).setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override

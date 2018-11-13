@@ -11,8 +11,6 @@ import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
-import com.example.home.secureforwarding.MainActivity;
-import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
@@ -36,26 +34,26 @@ public class P2PHandler implements Serializable {
     }
 
     public SharesPOJO fetchFilesToSend() {
-//        HashMap<String, String> completeFiles = getCompleteFiles();
-//        List<KeyShares> keyShares = appDatabase.dao().getKeySharesForThisDevice(KeyConstant.NOT_SENT_STATUS, id, KeyConstant.DEST_TYPE);
-//        keyShares.addAll(appDatabase.dao().getKeySharesEncryptedWithDevice(KeyConstant.NOT_SENT_STATUS, id, KeyConstant.DEST_TYPE));
-//        keyShares.addAll(appDatabase.dao().getKeySharesForDestDevice(KeyConstant.DEST_TYPE, id, KeyConstant.NOT_SENT_STATUS));
-//        for(KeyShares keyShare : keyShares){
-//            if(keyShare.getEncryptedNodeNum() == null) {
-//                byte[] cipherData = singletoneECPRE.GenerateProxyKey(singletoneECPRE.pvtKey, otherPubKey);
-//                keyShare.setCipher_data(cipherData);
-//                keyShare.setEncryptedNodeNum(id);
-//            }
-//            keyShare.setSenderInfo(id);
-//            keyShare.setStatus(KeyConstant.SENT_STATUS);
-//            appDatabase.dao().updateKeyShare(keyShare);
-//        }
-//        List<DataShares> dataShares = getDataShares(id);
-//        SharesPOJO shares = new SharesPOJO(keyShares, dataShares, completeFiles);
-//        return shares;
-
-        SharesPOJO shares = new SharesPOJO(appDatabase.dao().getTestShares(), appDatabase.dao().getTestDataShares(), new HashMap<String, String>());
+        HashMap<String, String> completeFiles = getCompleteFiles();
+        List<KeyShares> keyShares = appDatabase.dao().getKeySharesForThisDevice(KeyConstant.NOT_SENT_STATUS, id, KeyConstant.DEST_TYPE);
+        keyShares.addAll(appDatabase.dao().getKeySharesEncryptedWithDevice(KeyConstant.NOT_SENT_STATUS, id, KeyConstant.DEST_TYPE));
+        keyShares.addAll(appDatabase.dao().getKeySharesForDestDevice(KeyConstant.DEST_TYPE, id, KeyConstant.NOT_SENT_STATUS));
+        for(KeyShares keyShare : keyShares){
+            if(keyShare.getEncryptedNodeNum() == null) {
+                byte[] cipherData = singletoneECPRE.GenerateProxyKey(singletoneECPRE.pvtKey, otherPubKey);
+                keyShare.setCipher_data(cipherData);
+                keyShare.setEncryptedNodeNum(id);
+            }
+            keyShare.setSenderInfo(id);
+            keyShare.setStatus(KeyConstant.SENT_STATUS);
+            appDatabase.dao().updateKeyShare(keyShare);
+        }
+        List<DataShares> dataShares = getDataShares(id);
+        SharesPOJO shares = new SharesPOJO(keyShares, dataShares, completeFiles);
         return shares;
+
+//        SharesPOJO shares = new SharesPOJO(appDatabase.dao().getTestShares(), appDatabase.dao().getTestDataShares(), new HashMap<String, String>());
+//        return shares;
     }
 
     private List<DataShares> getDataShares(String id) {

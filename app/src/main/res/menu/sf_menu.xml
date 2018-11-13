@@ -9,13 +9,15 @@
         <menu>
             <item
                 android:id="@+id/reset_all"
-                android:title="Reset all" />
+                android:title="Reset all"
+                android:visible="false"/>
             <item
                 android:id="@+id/reset_msg"
                 android:title="Reset all msg" />
             <item
                 android:id="@+id/data_decoding"
-                android:title="Data Decoding" />
+                android:title="Data Decoding"
+                android:visible="false"/>
         </menu>
     </item>
 </menu>

@@ -17,6 +17,7 @@ import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileFragment.OnListFragmentInteractionListener;
 import com.example.home.secureforwarding.R;
 import com.example.home.secureforwarding.ShowImageActivity;
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.util.List;
@@ -48,8 +49,7 @@ public class CompleteFileRecyclerViewAdapter extends RecyclerView.Adapter<Comple
         Log.d("ImageAdapter", holder.completeFiles.toString());
         File file = new File(holder.completeFiles.getFilePath());
         if (file.exists()) {
-            Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
-            holder.imageView.setImageBitmap(bitmap);
+            Picasso.get().load(file).fit().centerInside().into(holder.imageView);
             holder.fileName.setText(file.getName());
             if(file.getName().contains("placeholder"))
                 holder.fileName.setText(holder.completeFiles.getId() + ".jpg");

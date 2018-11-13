@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.widget.ImageView;
 
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileActivity;
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 
@@ -25,8 +26,7 @@ public class ShowImageActivity extends AppCompatActivity {
         if(filePath != null){
             File file = new File(filePath);
             if(file.exists()){
-                Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
-                imageView.setImageBitmap(bitmap);
+                Picasso.get().load(file).into(imageView);
             }
         }
     }

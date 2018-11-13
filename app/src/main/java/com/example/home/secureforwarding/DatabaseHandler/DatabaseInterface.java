@@ -120,6 +120,9 @@ public interface DatabaseInterface {
     @Delete
     void deleteKeyShare(KeyShares keyShares);
 
+    @Delete
+    void deleteDataShare(DataShares dataShares);
+
     //Testing queries
     @Query("select * from keyshares limit 4")
     List<KeyShares> getTestShares();

@@ -4,25 +4,21 @@ import android.util.Log;
 
 import com.backblaze.erasure.ReedSolomon;
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
-import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
-import com.example.home.secureforwarding.MainActivity;
-import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Random;
 
 import static com.example.home.secureforwarding.DataHandler.DataConstant.BYTES_IN_INT;
 
 public class CreateDataShares {
-
     private String deviceID;
     private String nodeType;
     private AppDatabase database;
@@ -101,8 +97,20 @@ public class CreateDataShares {
         DataShares shares;
         for (int i = 0; i < shards.length; i++) {
             signature = SingletoneECPRE.getInstance().SignMessage(shards[i], pvt_key);
+            Log.d(TAG, "shardsize:" + shardSize);
+            byte[] withSignatureShard = new byte[shardSize + DataConstant.SIGNATURE_LENGTH];
+            System.arraycopy(shards[i], 0, withSignatureShard, 0, shards[i].length);
+            if(i==1){
+                Random random = new Random();
+                byte[] fakeSign = new byte[signature.length];
+                random.nextBytes(fakeSign);
+                System.arraycopy(fakeSign, 0, withSignatureShard, shardSize, signature.length);
+            }
+            else{
+                System.arraycopy(signature, 0, withSignatureShard, shardSize, signature.length);
+            }
             shares = new DataShares(deviceID, destId, i, KeyConstant.OWNER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
-                    null, shards[i]);
+                    null, withSignatureShard);
 //            if (i == 0 || i == 1) {
 //                DataShares tempShares = new DataShares("4_1", "15", i, KeyConstant.INTER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
 //                        null, shards[i]);
@@ -124,16 +132,16 @@ public class CreateDataShares {
             database.dao().insertDataShares(shares);
         }
 
-
         byte[][] secrets = new byte[2][];
-        secrets[0] = signature;
+        Log.d(TAG, "Checking the number of creations:" + secrets.length);
+        secrets[0] = SingletoneECPRE.getInstance().pubKey;
         byte[] secret = new byte[KeyConstant.keyByteLenght];
         Arrays.fill(secret, (byte) 1);
         byte[] dataInfo;
         String Stringsecret = "dy=" + String.valueOf(DATA_SHARDS) + ";py=" + PARITY_SHARDS + ";";
         dataInfo = Stringsecret.getBytes();
         System.arraycopy(dataInfo, 0, secret, 0, dataInfo.length);
-        Log.d(TAG, "Important observation:" + secret.length + " secret msg:" + new String(secret));
+        Log.d(TAG, "Important observation:" + secrets.length + " secret msg:" + new String(secret));
         secrets[1] = secret;
         return secrets;
     }

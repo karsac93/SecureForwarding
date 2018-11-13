@@ -30,13 +30,4 @@ public class SecretShare {
     public String getHash() {
         return hash;
     }
-
-    public void setSignature(byte[] signature) {
-        this.signature = new byte[signature.length];
-        System.arraycopy(signature, 0, this.signature, 0, signature.length);
-    }
-
-    public byte[] getSignature() {
-        return signature;
-    }
 }

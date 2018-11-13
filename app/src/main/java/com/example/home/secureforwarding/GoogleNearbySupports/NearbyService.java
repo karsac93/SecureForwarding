@@ -9,10 +9,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
-import com.example.home.secureforwarding.Entities.DataShares;
-import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.Entities.KeyStore;
-import com.example.home.secureforwarding.KeyHandler.DecipherKeyShare;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.MainActivity;
 import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
@@ -35,9 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.security.Key;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class NearbyService extends Service {
@@ -119,13 +114,13 @@ public class NearbyService extends Service {
         public void onConnectionInitiated(@NonNull String endpointId, @NonNull ConnectionInfo connectionInfo) {
             if (connectionInfo.isIncomingConnection() && connectionInfo.getEndpointName().contains(NICKNAME)) {
                 Log.d(TAG, "device_id name:" + connectionInfo.getEndpointName());
-                flag = true;
                 Nearby.getConnectionsClient(getApplicationContext())
                         .acceptConnection(endpointId, payloadCallback);
             } else {
                 Nearby.getConnectionsClient(getApplicationContext())
                         .acceptConnection(endpointId, payloadCallback);
             }
+            flag = true;
             Nearby.getConnectionsClient(getApplicationContext()).stopDiscovery();
             Nearby.getConnectionsClient(getApplicationContext()).stopAdvertising();
             requested = false;
@@ -253,7 +248,7 @@ public class NearbyService extends Service {
                                 endpointId, connectionLifecycleCallback);
                 requested = true;
                 Random r = new Random();
-                int next = r.nextInt(1000) + 4000;
+                int next = r.nextInt(1000) + 7000;
                 checkRequestHandler.postDelayed(checkRequestRunnable, next);
 
             }
@@ -281,6 +276,7 @@ public class NearbyService extends Service {
         public void run() {
             if(requested == true){
                 requested = false;
+                flag = false;
                 Log.d(TAG, "inside checkrequestRunnable!");
                 adverDiscoverHandler.post(adverDiscoverRunnable);
             }

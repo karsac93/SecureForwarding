@@ -37,7 +37,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_bias="0.01999998"
                 tools:ignore="ContentDescription"
-                tools:srcCompat="@tools:sample/backgrounds/scenic[14]" />
+                tools:srcCompat="@drawable/placeholder1" />
 
             <RadioGroup
                 android:id="@+id/radioGroup"

@@ -8,8 +8,10 @@ import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
 import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.Entities.SecretStore;
+import com.example.home.secureforwarding.GoogleNearbySupports.IncomingMsgHandler;
 import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.DecipherKeyShare;
+import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -25,11 +27,13 @@ public class DecipherDataShares {
     AppDatabase appDatabase;
     SecretStore secretStore;
     List<DataShares> dataShares;
+    DecipherKeyShare.CorruptInfo corruptInfoListener;
 
-    public DecipherDataShares(AppDatabase appDatabase, SecretStore secretStore, List<DataShares> dataShares) {
+    public DecipherDataShares(AppDatabase appDatabase, SecretStore secretStore, List<DataShares> dataShares, IncomingMsgHandler incomingMsgHandler) {
         this.appDatabase = appDatabase;
         this.secretStore = secretStore;
         this.dataShares = dataShares;
+        corruptInfoListener = incomingMsgHandler;
         decipherDataShards();
     }
 
@@ -40,11 +44,41 @@ public class DecipherDataShares {
         byte[][] shards = new byte[total][];
         final boolean[] shardsPresent = new boolean[total];
         int shardSize = 0;
+
+        int size = dataShares.size();
+        boolean checkCorrupt = false;
+        StringBuilder s = new StringBuilder();
+        SingletoneECPRE ecpre = SingletoneECPRE.getInstance();
         for(int i=0; i < dataShares.size(); i++){
-            shardSize = dataShares.get(i).getData().length;
-            shards[i] = new byte[shardSize];
-            System.arraycopy(dataShares.get(i).getData(), 0, shards[i], 0, shardSize);
-            shardsPresent[i] = true;
+            byte[] data = dataShares.get(i).getData();
+            shardSize = data.length - DataConstant.SIGNATURE_LENGTH;
+            byte[] signature = new byte[DataConstant.SIGNATURE_LENGTH];
+            System.arraycopy(data, data.length - DataConstant.SIGNATURE_LENGTH, signature, 0, DataConstant.SIGNATURE_LENGTH);
+            Log.d(TAG, "signature:" + new String(signature));
+            byte[] tempData = new byte[shardSize];
+            System.arraycopy(data, 0, tempData, 0, shardSize);
+            Log.d(TAG, "size of shard:" + shardSize + " Size of signature:" + signature.length);
+            boolean flag = ecpre.VerifySignature(tempData, signature, secretStore.getSignature());
+            Log.d(TAG, "flag:" + flag + " Msg_id:" + dataShares.get(i).getFileId());
+            if(flag) {
+                shards[i] = new byte[shardSize];
+                System.arraycopy(tempData, 0, shards[i], 0, shardSize);
+                shardsPresent[i] = true;
+            }
+            else{
+                checkCorrupt = true;
+                size--;
+                s.append(dataShares.get(i).getFileId()).append(",");
+                appDatabase.dao().deleteDataShare(dataShares.get(i));
+            }
+        }
+
+        Log.d(TAG, "checkCorrupt:" + checkCorrupt + " Length:" + shardsPresent.length);
+        if(checkCorrupt && size < k){
+            Log.d(TAG, "Yes we are inside corrupt!!");
+            String nums = s.substring(0, s.length()-1);
+            corruptInfoListener.displayCorruptInfo(nums, dataShares.get(0).getMsg_id());
+            return;
         }
 
         for(int i=0; i< total; i++){
