@@ -9,6 +9,9 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
+import com.example.home.secureforwarding.Entities.CompleteFiles;
+import com.example.home.secureforwarding.Entities.DataShares;
+import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.Entities.KeyStore;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.MainActivity;
@@ -33,13 +36,14 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Random;
 
 public class NearbyService extends Service {
     public static final String TAG = NearbyService.class.getSimpleName();
     public static String SERVICE_ID = "secure_forwarding";
     static String NICKNAME = "XSFX";
-    public static final int HANDLE_DELAY = 5000;
+    public static final int HANDLE_DELAY = 8000;
     ArrayList<String> previousConnectedDeviceId = new ArrayList<>();
     public static final String MSG_RECIVED = "msg_received";
     boolean flag = false;
@@ -47,6 +51,7 @@ public class NearbyService extends Service {
     AppDatabase appDatabase;
     boolean destroyed;
     boolean requested = false;
+    SharesPOJO sendingData;
 
     public NearbyService() {
     }
@@ -77,6 +82,7 @@ public class NearbyService extends Service {
         destroyed = false;
         Nearby.getConnectionsClient(getApplicationContext()).stopAllEndpoints();
         appDatabase = AppDatabase.getAppDatabase(this);
+        adverDiscoverHandler.removeCallbacks(adverDiscoverRunnable);
         adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
         return START_NOT_STICKY;
     }
@@ -103,10 +109,10 @@ public class NearbyService extends Service {
         Nearby.getConnectionsClient(getApplicationContext()).stopAllEndpoints();
         Nearby.getConnectionsClient(getApplicationContext()).startAdvertising(NICKNAME, SERVICE_ID,
                 connectionLifecycleCallback, new AdvertisingOptions.Builder()
-                        .setStrategy(Strategy.P2P_POINT_TO_POINT).build());
+                        .setStrategy(Strategy.P2P_STAR).build());
         Nearby.getConnectionsClient(getApplicationContext()).startDiscovery(SERVICE_ID,
                 endpointDiscoveryCallback, new DiscoveryOptions.Builder()
-                        .setStrategy(Strategy.P2P_POINT_TO_POINT).build());
+                        .setStrategy(Strategy.P2P_STAR).build());
     }
 
     ConnectionLifecycleCallback connectionLifecycleCallback = new ConnectionLifecycleCallback() {
@@ -121,8 +127,6 @@ public class NearbyService extends Service {
                         .acceptConnection(endpointId, payloadCallback);
             }
             flag = true;
-            Nearby.getConnectionsClient(getApplicationContext()).stopDiscovery();
-            Nearby.getConnectionsClient(getApplicationContext()).stopAdvertising();
             requested = false;
         }
 
@@ -140,6 +144,7 @@ public class NearbyService extends Service {
                     Log.d(TAG, "Connection Failed");
                     if(destroyed == false) {
                         setFlagsFalse();
+                        adverDiscoverHandler.removeCallbacks(adverDiscoverRunnable);
                         adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
                     }
                     break;
@@ -149,6 +154,7 @@ public class NearbyService extends Service {
                             "Connection broken, searching nearby devices again!", Toast.LENGTH_SHORT).show();
                     if(destroyed == false) {
                         setFlagsFalse();
+                        adverDiscoverHandler.removeCallbacks(adverDiscoverRunnable);
                         adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
                     }
             }
@@ -159,6 +165,7 @@ public class NearbyService extends Service {
             Log.d(TAG, "Disconnected");
             if(destroyed == false) {
                 setFlagsFalse();
+                adverDiscoverHandler.removeCallbacks(adverDiscoverRunnable);
                 adverDiscoverHandler.postDelayed(adverDiscoverRunnable, HANDLE_DELAY);
             }
         }
@@ -196,7 +203,8 @@ public class NearbyService extends Service {
                             Toast.makeText(NearbyService.this, "Connected to the nearby device, device id:" + metadata.deviceId, Toast.LENGTH_SHORT).show();
                             P2PHandler p2PHandler = new P2PHandler(metadata.deviceId,
                                     metadata.devicePubKey, getApplicationContext());
-                            sendStream(endpointId, p2PHandler.fetchFilesToSend());
+                            sendingData = p2PHandler.fetchFilesToSend();
+                            sendStream(endpointId, sendingData);
                             return;
                         } else {
                             quitConnection(endpointId);
@@ -218,6 +226,7 @@ public class NearbyService extends Service {
             if(payload.getType() == Payload.Type.BYTES){
                 if(receivedMsg == true){
                     Toast.makeText(NearbyService.this, "File transferred!", Toast.LENGTH_SHORT).show();
+                    updateData(sendingData);
                     quitConnection(endpointId);
                 }
             }
@@ -228,6 +237,23 @@ public class NearbyService extends Service {
 
         }
     };
+
+    private void updateData(SharesPOJO sendingData) {
+        for(Map.Entry<String, String> keyVal : sendingData.completeFilesToSend.entrySet()){
+            appDatabase.dao().deleteDataSharesForMsg(keyVal.getKey());
+            appDatabase.dao().deleteKeySharesForMsg(keyVal.getKey());
+            appDatabase.dao().deleteCompleteFileQuery(keyVal.getKey());
+        }
+
+        for(KeyShares keyShare : sendingData.keySharesToSend){
+            appDatabase.dao().updateKeyShare(keyShare);
+        }
+
+        for(DataShares dataShare : sendingData.dataSharesToSend){
+            appDatabase.dao().updateDataShare(dataShare);
+        }
+
+    }
 
     private void quitConnection(String endpointId) {
         setFlagsFalse();
@@ -248,7 +274,7 @@ public class NearbyService extends Service {
                                 endpointId, connectionLifecycleCallback);
                 requested = true;
                 Random r = new Random();
-                int next = r.nextInt(1000) + 7000;
+                int next = r.nextInt(2000) + 13000;
                 checkRequestHandler.postDelayed(checkRequestRunnable, next);
 
             }

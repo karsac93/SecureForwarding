@@ -29,6 +29,7 @@
         android:layout_marginTop="16dp"
         android:text="File name:"
         android:textStyle="bold"
+        android:textSize="15sp"
         app:layout_constraintStart_toEndOf="@+id/imageView"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -41,6 +42,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="45dp"
         android:text="TextView"
+        android:textSize="15sp"
         app:layout_constraintBottom_toTopOf="@+id/destnode"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.074"
@@ -56,6 +58,7 @@
         android:layout_marginBottom="16dp"
         android:text="Destination node:"
         android:textStyle="bold"
+        android:textSize="15sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/imageView" />
 
@@ -67,6 +70,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="16dp"
         android:text="TextView"
+        android:textSize="15sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.074"

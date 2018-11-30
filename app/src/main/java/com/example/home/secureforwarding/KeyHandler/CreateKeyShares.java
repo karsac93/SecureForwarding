@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 import static com.example.home.secureforwarding.KeyHandler.KeyConstant.KEY_TYPE;
 import static com.example.home.secureforwarding.KeyHandler.KeyConstant.NOT_SENT_STATUS;
+import static com.example.home.secureforwarding.KeyHandler.KeyConstant.SENT_STATUS;
 
 public class CreateKeyShares {
     private String device_msg_id;
@@ -110,6 +111,17 @@ public class CreateKeyShares {
 //                        KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i), null, null);
 //                database.dao().insertKeyShares(dbShare1);
 //            }
+
+            KeyShares dbshare1;
+            if(shares[i].getNumber() > 7)
+                dbshare1 = new KeyShares("5_1", String.valueOf(3), shares[i].getNumber(),
+                        KeyConstant.INTER_TYPE, KEY_TYPE, SENT_STATUS,
+                        "4", keyShares.get(i), null, null);
+            else
+                dbshare1 = new KeyShares("5_1", String.valueOf(3), shares[i].getNumber(),
+                        KeyConstant.INTER_TYPE, KEY_TYPE, NOT_SENT_STATUS,
+                        null, keyShares.get(i), null, null);
+            database.dao().insertKeyShares(dbshare1);
             database.dao().insertKeyShares(dbShare);
         }
     }

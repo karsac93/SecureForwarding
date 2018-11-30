@@ -27,12 +27,18 @@ public class CompleteFileActivity extends AppCompatActivity implements CompleteF
         String displayInfo = intent.getStringExtra(DISPLAY_INFO);
         String sharetype = "";
 
-        if (displayInfo.contains(KeyConstant.OWNER_TYPE))
+        if (displayInfo.contains(KeyConstant.OWNER_TYPE)) {
             sharetype = KeyConstant.OWNER_TYPE;
-        else if(displayInfo.contains(KeyConstant.DEST_TYPE))
+            getSupportActionBar().setTitle("Own Msg");
+        }
+        else if(displayInfo.contains(KeyConstant.DEST_TYPE)) {
             sharetype = KeyConstant.DEST_TYPE;
-        else
+            getSupportActionBar().setTitle("Destination Msg");
+        }
+        else {
             sharetype = KeyConstant.INTER_TYPE;
+            getSupportActionBar().setTitle("Intermediary Msg");
+        }
 
         CompleteFileFragment completeFileFragment = new CompleteFileFragment();
         Bundle bundle = new Bundle();

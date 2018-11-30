@@ -111,6 +111,9 @@ public interface DatabaseInterface {
     @Delete
     void deleteCompleteFileId(CompleteFiles completeFiles);
 
+    @Query("delete from completefiles where id=:id")
+    void deleteCompleteFileQuery(String id);
+
     @Query("delete from keyshares where msg_id=:msg_id")
     void deleteKeySharesForMsg(String msg_id);
 

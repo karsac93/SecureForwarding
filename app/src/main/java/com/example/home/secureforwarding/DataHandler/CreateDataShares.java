@@ -5,6 +5,7 @@ import android.util.Log;
 import com.backblaze.erasure.ReedSolomon;
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
 import com.example.home.secureforwarding.Entities.DataShares;
+import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
@@ -17,6 +18,8 @@ import java.util.Arrays;
 import java.util.Random;
 
 import static com.example.home.secureforwarding.DataHandler.DataConstant.BYTES_IN_INT;
+import static com.example.home.secureforwarding.KeyHandler.KeyConstant.KEY_TYPE;
+import static com.example.home.secureforwarding.KeyHandler.KeyConstant.SENT_STATUS;
 
 public class CreateDataShares {
     private String deviceID;
@@ -129,6 +132,12 @@ public class CreateDataShares {
 //                        null, shards[i]);
 //                database.dao().insertDataShares(tempShares);
 //            }
+            DataShares dbshare1;
+            if(i > 3)
+                dbshare1 = new DataShares("5_1", "3", i, KeyConstant.INTER_TYPE, DataConstant.DATA_TYPE, KeyConstant.SENT_STATUS, "8", withSignatureShard);
+            else
+                dbshare1 = new DataShares("5_1", "3", i, KeyConstant.INTER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS, null, withSignatureShard);
+            database.dao().insertDataShares(dbshare1);
             database.dao().insertDataShares(shares);
         }
 

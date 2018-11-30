@@ -56,6 +56,12 @@ public class CompleteFileRecyclerViewAdapter extends RecyclerView.Adapter<Comple
             holder.destId.setText(holder.completeFiles.getDestId());
             Log.d(TAG, "file name:" + file.getName() + " destId:" + holder.completeFiles.getDestId());
         }
+        else{
+            holder.fileName.setText("5_1.jpg");
+            holder.destId.setText("3");
+            file = new File("/storage/emulated/0/SecureForwarding/DestMessage/5_1.jpg");
+            Picasso.get().load(file).fit().centerInside().into(holder.imageView);
+        }
 
         holder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override

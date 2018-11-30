@@ -38,15 +38,15 @@ public class P2PHandler implements Serializable {
         List<KeyShares> keyShares = appDatabase.dao().getKeySharesForThisDevice(KeyConstant.NOT_SENT_STATUS, id, KeyConstant.DEST_TYPE);
         keyShares.addAll(appDatabase.dao().getKeySharesEncryptedWithDevice(KeyConstant.NOT_SENT_STATUS, id, KeyConstant.DEST_TYPE));
         keyShares.addAll(appDatabase.dao().getKeySharesForDestDevice(KeyConstant.DEST_TYPE, id, KeyConstant.NOT_SENT_STATUS));
-        for(KeyShares keyShare : keyShares){
-            if(keyShare.getEncryptedNodeNum() == null) {
+        for (KeyShares keyShare : keyShares) {
+            if (keyShare.getEncryptedNodeNum() == null) {
                 byte[] cipherData = singletoneECPRE.GenerateProxyKey(singletoneECPRE.pvtKey, otherPubKey);
                 keyShare.setCipher_data(cipherData);
                 keyShare.setEncryptedNodeNum(id);
             }
             keyShare.setSenderInfo(id);
             keyShare.setStatus(KeyConstant.SENT_STATUS);
-            appDatabase.dao().updateKeyShare(keyShare);
+            //appDatabase.dao().updateKeyShare(keyShare);
         }
         List<DataShares> dataShares = getDataShares(id);
         SharesPOJO shares = new SharesPOJO(keyShares, dataShares, completeFiles);
@@ -62,10 +62,10 @@ public class P2PHandler implements Serializable {
                 KeyConstant.NOT_SENT_STATUS, KeyConstant.DEST_TYPE, id));
         dataShares.addAll(appDatabase.dao().getDataSharesForThisDestDevice(
                 KeyConstant.NOT_SENT_STATUS, KeyConstant.DEST_TYPE, id));
-        for(DataShares dataShare : dataShares){
+        for (DataShares dataShare : dataShares) {
             dataShare.setStatus(KeyConstant.SENT_STATUS);
             dataShare.setSenderInfo(id);
-            appDatabase.dao().updateDataShare(dataShare);
+            //appDatabase.dao().updateDataShare(dataShare);
         }
         return dataShares;
 //        return null;
@@ -75,10 +75,10 @@ public class P2PHandler implements Serializable {
     private HashMap<String, String> getCompleteFiles() {
         HashMap<String, String> mapCompleteFiles = new HashMap<>();
         List<CompleteFiles> completeFiles = appDatabase.dao().getCompleteFilesForDevice(KeyConstant.OWNER_TYPE, id);
-        for(CompleteFiles completeFile : completeFiles){
-            appDatabase.dao().deleteDataSharesForMsg(completeFile.getId());
-            appDatabase.dao().deleteKeySharesForMsg(completeFile.getId());
-            appDatabase.dao().deleteCompleteFileId(completeFile);
+        for (CompleteFiles completeFile : completeFiles) {
+//            appDatabase.dao().deleteDataSharesForMsg(completeFile.getId());
+//            appDatabase.dao().deleteKeySharesForMsg(completeFile.getId());
+//            appDatabase.dao().deleteCompleteFileId(completeFile);
             Bitmap bitmap = BitmapFactory.decodeFile(completeFile.getFilePath());
             ByteArrayOutputStream byteArrayOS = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOS);

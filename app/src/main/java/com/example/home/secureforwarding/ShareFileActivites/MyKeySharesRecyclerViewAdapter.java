@@ -39,6 +39,7 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
 
         if (holder.shareFile.getClass().equals(KeyShares.class)) {
             KeyShares keyShare = (KeyShares) holder.shareFile;
+            holder.file_id.setText("Key - " + String.valueOf(keyShare.getFileId()));
             String encryptedNum = "NA";
             if (keyShare.getEncryptedNodeNum() != null && keyShare.getEncryptedNodeNum().length() != 0) {
                 encryptedNum = keyShare.getEncryptedNodeNum();
@@ -56,10 +57,11 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
             dataShare = holder.shareFile;
             holder.encryptedNum.setVisibility(View.GONE);
             holder.proxyTxt.setVisibility(View.GONE);
+            holder.file_id.setText("Data - " + String.valueOf(dataShare.getFileId()));
         }
+
         holder.msg_id.setText(dataShare.getMsg_id());
         holder.share_type.setText(dataShare.getShareType());
-        holder.file_id.setText(String.valueOf(dataShare.getFileId()));
         holder.dest_id.setText(dataShare.getDestId());
 
         String value = "Sent";

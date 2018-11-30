@@ -73,10 +73,10 @@ public class ChooseEncryption extends AppCompatActivity {
             return;
         }
 
-        byte[] pvtKey = ecpre.pvtKey;
+        byte[] invKey = ecpre.invKey;
         byte[] pubKey = ecpre.pubKey;
 
-        byte[] proxyKey = ecpre.GenerateProxyKey(pvtKey, publicKey);
+        byte[] proxyKey = ecpre.GenerateProxyKey(invKey, publicKey);
         byte[] proxyReEncyption = ecpre.ReEncryption(pubKey, proxyKey);
 
         share.setCipher_data(proxyReEncyption);

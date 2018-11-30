@@ -32,10 +32,14 @@ public class ShareFilesActivity extends AppCompatActivity implements SharesFragm
         String action = intent.getStringExtra(INTENT_ACTION);
         Log.d(TAG, "Action:" + action);
         String id = "";
-        if (action.contains(COMPLETE_ACTION))
+        if (action.contains(COMPLETE_ACTION)) {
             id = intent.getStringExtra(CompleteFileActivity.MSG_ID);
-        else
+            getSupportActionBar().setTitle("Fragments");
+        }
+        else {
             id = KeyConstant.INTER_TYPE;
+            getSupportActionBar().setTitle("Fragments");
+        }
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         SharesFragment sharesFragment = new SharesFragment();
