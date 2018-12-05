@@ -18,6 +18,7 @@ import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.Entities.SecretStore;
 import com.example.home.secureforwarding.KeyHandler.DecipherKeyShare;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
+import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.MainActivity;
 import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
@@ -31,6 +32,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import io.reactivex.Single;
 
 public class IncomingMsgHandler implements Runnable, DecipherKeyShare.CorruptInfo {
     private static final String TAG = IncomingMsgHandler.class.getSimpleName();
@@ -111,8 +114,7 @@ public class IncomingMsgHandler implements Runnable, DecipherKeyShare.CorruptInf
         if (dataShares.size() >= secretStore.getKnum()) {
             try {
                 new DecipherDataShares(appDatabase, secretStore, dataShares, this);
-            }
-            catch (Exception e){
+            } catch (Exception e) {
                 Log.d(TAG, "Think it has corrupted files!:" + e.getLocalizedMessage());
             }
         }
@@ -122,22 +124,35 @@ public class IncomingMsgHandler implements Runnable, DecipherKeyShare.CorruptInf
         String deviceId = SharedPreferenceHandler.getStringValues(context, MainActivity.DEVICE_ID);
         for (KeyShares keyshare : keySharesToSend) {
             if (keyshare.getDestId().equals(deviceId)) {
-                if (appDatabase.dao().checkCompleteFilealreadyPresent(keyshare.getMsg_id(), KeyConstant.DEST_TYPE, true) == 0) {
-                    if (appDatabase.dao().checkCompleteFileRowExistsForMsg(keyshare.getMsg_id(), KeyConstant.DEST_TYPE) == 0) {
-                        CompleteFiles completeFiles = new CompleteFiles(keyshare.getMsg_id(),
-                                KeyConstant.DEST_TYPE, deviceId, SharedPreferenceHandler.getStringValues(context, MainActivity.PLACEHOLDER_IMAGE));
-                        appDatabase.dao().insertCompleteFile(completeFiles);
+                if (keyshare.getEncryptedNodeNum() == null || keyshare.getEncryptedNodeNum().equals(deviceId)) {
+                    if (appDatabase.dao().checkCompleteFilealreadyPresent(keyshare.getMsg_id(), KeyConstant.DEST_TYPE, true) == 0) {
+                        if (appDatabase.dao().checkCompleteFileRowExistsForMsg(keyshare.getMsg_id(), KeyConstant.DEST_TYPE) == 0) {
+                            CompleteFiles completeFiles = new CompleteFiles(keyshare.getMsg_id(),
+                                    KeyConstant.DEST_TYPE, deviceId, SharedPreferenceHandler.getStringValues(context, MainActivity.PLACEHOLDER_IMAGE));
+                            appDatabase.dao().insertCompleteFile(completeFiles);
+                        }
+                        byte[] plain_data = SingletoneECPRE.getInstance().Decryption(keyshare.getCipher_data(), keyshare.getData(), SingletoneECPRE.getInstance().invKey);
+                        keyshare.setData(plain_data);
+                        keyshare.setCipher_data(null);
+                        keyshare.setEncryptedNodeNum("NA");
+                        keyshare.setSenderInfo("NA");
+                        keyshare.setType(KeyConstant.DEST_TYPE);
+                        keyshare.setStatus(KeyConstant.NOT_SENT_STATUS);
+                        appDatabase.dao().insertKeyShares(keyshare);
                     }
-                    keyshare.setCipher_data(null);
-                    keyshare.setEncryptedNodeNum("NA");
-                    keyshare.setSenderInfo("NA");
-                    keyshare.setType(KeyConstant.DEST_TYPE);
-                    keyshare.setStatus(KeyConstant.NOT_SENT_STATUS);
-                    appDatabase.dao().insertKeyShares(keyshare);
                 }
             } else {
-                keyshare.setCipher_data(null);
-                keyshare.setEncryptedNodeNum("NA");
+                //keyshare.setCipher_data(null);
+                //keyshare.setEncryptedNodeNum("NA");
+                if(keyshare.getEncryptedNodeNum() == null || keyshare.getEncryptedNodeNum().equals(deviceId)){
+                    byte[] dest_pubKey = appDatabase.dao().getPublicKey(keyshare.getDestId());
+                    if(dest_pubKey != null){
+                        byte[] proxyKey = SingletoneECPRE.getInstance().GenerateProxyKey(SingletoneECPRE.getInstance().invKey, dest_pubKey);
+                        byte[] reEncyption = SingletoneECPRE.getInstance().ReEncryption(SingletoneECPRE.getInstance().pubKey, proxyKey);
+                        keyshare.setCipher_data(reEncyption);
+                        keyshare.setEncryptedNodeNum(keyshare.getDestId());
+                    }
+                }
                 keyshare.setSenderInfo("NA");
                 keyshare.setType(KeyConstant.INTER_TYPE);
                 keyshare.setStatus(KeyConstant.NOT_SENT_STATUS);

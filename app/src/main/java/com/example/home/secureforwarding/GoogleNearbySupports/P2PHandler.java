@@ -11,12 +11,15 @@ import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
+import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import static com.example.home.secureforwarding.MainActivity.DEVICE_ID;
 
 public class P2PHandler implements Serializable {
     String id;
@@ -39,10 +42,10 @@ public class P2PHandler implements Serializable {
         keyShares.addAll(appDatabase.dao().getKeySharesEncryptedWithDevice(KeyConstant.NOT_SENT_STATUS, id, KeyConstant.DEST_TYPE));
         keyShares.addAll(appDatabase.dao().getKeySharesForDestDevice(KeyConstant.DEST_TYPE, id, KeyConstant.NOT_SENT_STATUS));
         for (KeyShares keyShare : keyShares) {
-            if (keyShare.getEncryptedNodeNum() == null) {
-                byte[] cipherData = singletoneECPRE.GenerateProxyKey(singletoneECPRE.pvtKey, otherPubKey);
-                keyShare.setCipher_data(cipherData);
-                keyShare.setEncryptedNodeNum(id);
+            if(keyShare.getEncryptedNodeNum().equals(SharedPreferenceHandler.getStringValues(context, DEVICE_ID))){
+                byte[] proxyKey = SingletoneECPRE.getInstance().GenerateProxyKey(SingletoneECPRE.getInstance().invKey, otherPubKey);
+                byte[] proxyReEncryption = SingletoneECPRE.getInstance().ReEncryption(SingletoneECPRE.getInstance().pubKey, proxyKey);
+                keyShare.setCipher_data(proxyReEncryption);
             }
             keyShare.setSenderInfo(id);
             keyShare.setStatus(KeyConstant.SENT_STATUS);

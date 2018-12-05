@@ -13,6 +13,7 @@ import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.Entities.KeyStore;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.R;
+import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import org.apache.commons.lang3.SerializationUtils;
 
@@ -21,6 +22,8 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+
+import static com.example.home.secureforwarding.MainActivity.DEVICE_ID;
 
 public class ChooseEncryption extends AppCompatActivity {
 
@@ -34,6 +37,7 @@ public class ChooseEncryption extends AppCompatActivity {
 
     AppDatabase database;
     KeyShares share;
+    String deviceID;
 
     SingletoneECPRE ecpre;
 
@@ -55,6 +59,8 @@ public class ChooseEncryption extends AppCompatActivity {
         ArrayAdapter<KeyStore> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, keystore);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         nodeSpinner.setAdapter(adapter);
+
+        deviceID = SharedPreferenceHandler.getStringValues(this, DEVICE_ID);
     }
 
     /**
@@ -75,11 +81,15 @@ public class ChooseEncryption extends AppCompatActivity {
 
         byte[] invKey = ecpre.invKey;
         byte[] pubKey = ecpre.pubKey;
+        if (share.getEncryptedNodeNum() == null || share.getEncryptedNodeNum().length() == 0) {
+            byte[] encrypted_data = ecpre.Encryption(share.getData());
+            share.setData(encrypted_data);
+        }
 
         byte[] proxyKey = ecpre.GenerateProxyKey(invKey, publicKey);
         byte[] proxyReEncyption = ecpre.ReEncryption(pubKey, proxyKey);
-
         share.setCipher_data(proxyReEncyption);
+
         share.setEncryptedNodeNum(keystoreObj.getId());
         database.dao().updateKeyShare(share);
         Toast.makeText(this, "A proxy key is generated with chosen node for this share!", Toast.LENGTH_SHORT).show();

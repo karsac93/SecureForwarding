@@ -83,11 +83,21 @@ public class CreateKeyShares {
         }
 
         //each share is encrypted using EC and updated in the database
-        KeyShares dbShare;
+        KeyShares dbShare = null;
         for (int i = 0; i < shares.length; i++) {
-            //byte[] cipher_data = SingletoneECPRE.getInstance().Encryption(keyShares.get(i));
-            dbShare = new KeyShares(device_msg_id, destId, shares[i].getNumber(), nodeType,
-                    KEY_TYPE, NOT_SENT_STATUS, null, keyShares.get(i), null, null);
+            boolean flag = false;
+            byte[] dest_public_key = database.dao().getPublicKey(destId);
+            if (dest_public_key != null) {
+                flag = true;
+                byte[] proxy_key = SingletoneECPRE.getInstance().GenerateProxyKey(SingletoneECPRE.getInstance().invKey, dest_public_key);
+                byte[] reEncypt = SingletoneECPRE.getInstance().ReEncryption(SingletoneECPRE.getInstance().pubKey, proxy_key);
+                byte[] cipher_data = SingletoneECPRE.getInstance().Encryption(keyShares.get(i));
+                dbShare = new KeyShares(device_msg_id, destId, shares[i].getNumber(), nodeType,
+                        KEY_TYPE, NOT_SENT_STATUS, "NA", cipher_data, destId, reEncypt);
+            }
+            if (flag == false)
+                dbShare = new KeyShares(device_msg_id, destId, shares[i].getNumber(), nodeType,
+                        KEY_TYPE, NOT_SENT_STATUS, "NA", keyShares.get(i), "NA", null);
 
 //            if (i == 0 || i == 1) {
 //                KeyShares dbShare1 = new KeyShares("4_1", String.valueOf(15), shares[i].getNumber(), KeyConstant.INTER_TYPE,
@@ -112,16 +122,16 @@ public class CreateKeyShares {
 //                database.dao().insertKeyShares(dbShare1);
 //            }
 
-            KeyShares dbshare1;
-            if(shares[i].getNumber() > 7)
-                dbshare1 = new KeyShares("5_1", String.valueOf(3), shares[i].getNumber(),
-                        KeyConstant.INTER_TYPE, KEY_TYPE, SENT_STATUS,
-                        "4", keyShares.get(i), null, null);
-            else
-                dbshare1 = new KeyShares("5_1", String.valueOf(3), shares[i].getNumber(),
-                        KeyConstant.INTER_TYPE, KEY_TYPE, NOT_SENT_STATUS,
-                        null, keyShares.get(i), null, null);
-            database.dao().insertKeyShares(dbshare1);
+//            KeyShares dbshare1;
+//            if (shares[i].getNumber() > 7)
+//                dbshare1 = new KeyShares("5_1", String.valueOf(3), shares[i].getNumber(),
+//                        KeyConstant.INTER_TYPE, KEY_TYPE, SENT_STATUS,
+//                        "4", keyShares.get(i), null, null);
+//            else
+//                dbshare1 = new KeyShares("5_1", String.valueOf(3), shares[i].getNumber(),
+//                        KeyConstant.INTER_TYPE, KEY_TYPE, NOT_SENT_STATUS,
+//                        null, keyShares.get(i), null, null);
+//            database.dao().insertKeyShares(dbshare1);
             database.dao().insertKeyShares(dbShare);
         }
     }
