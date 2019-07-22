@@ -235,7 +235,7 @@ public class SingletoneECPRE {
             Element e1 = pairing.pairing(elemSig, G);
             Element e2 = pairing.pairing(elemHash, elemPubKey);
 
-            return e1.isEqual(e2) ? true : false;
+            return e1.isEqual(e2) ? false : true;
         } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
             e.printStackTrace();
             return false;

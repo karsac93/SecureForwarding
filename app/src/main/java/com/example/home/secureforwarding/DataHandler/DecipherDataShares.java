@@ -61,10 +61,10 @@ public class DecipherDataShares {
             Log.d(TAG, "size of shard:" + shardSize + " Size of signature:" + signature.length);
             boolean flag = ecpre.VerifySignature(tempData, signature, secretStore.getSignature());
             if(flag) Log.d(TAG, "----------------------");
-            if(dataShares.get(i).getFileId()==1)
-                flag = false;
-            else
-                flag = true;
+//            if(dataShares.get(i).getFileId()==1)
+//                flag = false;
+//            else
+//                flag = true;
             Log.d(TAG, "flag:" + flag + " Msg_id:" + dataShares.get(i).getFileId());
             if(flag) {
                 shards[i] = new byte[shardSize];
