@@ -9,6 +9,7 @@ import com.example.home.secureforwarding.GoogleNearbySupports.IncomingMsgHandler
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,18 +66,24 @@ public class DecipherKeyShare {
         int size = obtainedShares.size();
         StringBuilder s = new StringBuilder();
         String freqHash = getFreqHash(frequentHash);
-        for(SecretShare share: secretShares){
-            if(!share.getHash().equals(freqHash)){
+        List<Integer> corruptNums = new ArrayList<>();
+        for(int i=0; i< secretShares.size(); i++){
+            SecretShare share = secretShares.get(i);
+            Log.d(TAG, share.getHash() + " " + freqHash);
+            if(!share.getHash().contains(freqHash)){
                 flag = true;
-                Log.d(TAG, "Hell Yeah! deleting corrupt ones");
-                for(KeyShares keyShare : obtainedShares){
-                    s.append(String.valueOf(share.getNumber())).append(",");
-                    if(keyShare.getFileId() == share.getNumber()) {
-                        appDatabase.dao().deleteKeyShare(keyShare);
-                        size--;
-                    }
-                }
+                corruptNums.add(i);
+                Log.d(TAG, "deleting corrupt ones:" + share.getNumber() + " " + i);
             }
+        }
+        Log.d(TAG, "Secretshare size:" + secretShares.size() +
+                " CorruptNums size:" + corruptNums.size());
+        for(Integer i : corruptNums){
+            Log.d(TAG, "key shares being deleted:" + i);
+            secretShares.remove(i.intValue());
+            KeyShares keyShare = obtainedShares.get(i.intValue());
+            obtainedShares.remove(i.intValue());
+            appDatabase.dao().deleteKeyShare(keyShare);
         }
 
         Log.d(TAG, " flag:" + flag + " secretshare size:" + secretShares.size());
@@ -97,7 +104,7 @@ public class DecipherKeyShare {
         BigInteger[] retrievedInfo = rss.ReconstructShare(secretShares1);
         byte[] aesKey = retrievedInfo[0].toByteArray();
         Log.d(TAG, "aes Key:" + new String(aesKey));
-        String dataShareInfo = new String(retrievedInfo[2].toByteArray());
+        String dataShareInfo = new String(retrievedInfo[2].toByteArray(), StandardCharsets.UTF_8);
         dataShareInfo = dataShareInfo.substring(0, dataShareInfo.lastIndexOf(";"));
         Log.d(TAG, "aes Key:" + new String(aesKey) + "data share info:" + dataShareInfo);
         String[] k_n = dataShareInfo.split(";");

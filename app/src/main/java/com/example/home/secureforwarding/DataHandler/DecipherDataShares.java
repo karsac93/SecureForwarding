@@ -12,6 +12,7 @@ import com.example.home.secureforwarding.GoogleNearbySupports.IncomingMsgHandler
 import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.DecipherKeyShare;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
+import com.example.home.secureforwarding.MainActivity;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -48,17 +49,22 @@ public class DecipherDataShares {
         int size = dataShares.size();
         boolean checkCorrupt = false;
         StringBuilder s = new StringBuilder();
-        SingletoneECPRE ecpre = SingletoneECPRE.getInstance();
+        SingletoneECPRE ecpre = MainActivity.ecpreObj;
         for(int i=0; i < dataShares.size(); i++){
             byte[] data = dataShares.get(i).getData();
             shardSize = data.length - DataConstant.SIGNATURE_LENGTH;
             byte[] signature = new byte[DataConstant.SIGNATURE_LENGTH];
             System.arraycopy(data, data.length - DataConstant.SIGNATURE_LENGTH, signature, 0, DataConstant.SIGNATURE_LENGTH);
-            Log.d(TAG, "signature:" + new String(signature));
+            //Log.d(TAG, "signature:" + new String(signature));
             byte[] tempData = new byte[shardSize];
             System.arraycopy(data, 0, tempData, 0, shardSize);
             Log.d(TAG, "size of shard:" + shardSize + " Size of signature:" + signature.length);
             boolean flag = ecpre.VerifySignature(tempData, signature, secretStore.getSignature());
+            if(flag) Log.d(TAG, "----------------------");
+            if(dataShares.get(i).getFileId()==1)
+                flag = false;
+            else
+                flag = true;
             Log.d(TAG, "flag:" + flag + " Msg_id:" + dataShares.get(i).getFileId());
             if(flag) {
                 shards[i] = new byte[shardSize];
@@ -73,7 +79,7 @@ public class DecipherDataShares {
             }
         }
 
-        Log.d(TAG, "checkCorrupt:" + checkCorrupt + " Length:" + shardsPresent.length);
+        //Log.d(TAG, "checkCorrupt:" + checkCorrupt + " Length:" + shardsPresent.length);
         if(checkCorrupt && size < k){
             Log.d(TAG, "Yes we are inside corrupt!!");
             String nums = s.substring(0, s.length()-1);

@@ -33,16 +33,15 @@ dependencies {
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
     implementation 'android.arch.persistence.room:runtime:1.1.0'
     annotationProcessor "android.arch.persistence.room:compiler:1.1.0"
-    implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
-    implementation files('libs/jpbc-api-2.0.0.jar')
-    implementation files('libs/jpbc-crypto-2.0.0.jar')
-    implementation files('libs/jpbc-plaf-2.0.0.jar')
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+    implementation 'io.reactivex.rxjava2:rxjava:2.1.1'
     implementation 'net.java.dev.jna:jna:4.2.0'
     implementation 'com.google.guava:guava:26.0-android'
     implementation files('libs/JavaReedSolomon-master.jar')
-    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+    implementation 'org.apache.commons:commons-lang3:3.8.1'
     implementation 'com.google.android.gms:play-services-nearby:16.0.0'
     implementation 'com.google.firebase:firebase-database:16.0.3'
     implementation 'com.squareup.picasso:picasso:2.71828'
-
+    implementation files('libs/jpbc-api-1.2.1.jar')
+    implementation files('libs/jpbc-plaf-1.2.1.jar')
 }

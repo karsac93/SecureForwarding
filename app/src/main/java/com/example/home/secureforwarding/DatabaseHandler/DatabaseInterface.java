@@ -127,10 +127,10 @@ public interface DatabaseInterface {
     void deleteDataShare(DataShares dataShares);
 
     //Testing queries
-    @Query("select * from keyshares limit 4")
+    @Query("select * from keyshares limit 6")
     List<KeyShares> getTestShares();
 
-    @Query("select * from datashares limit 4")
+    @Query("select * from datashares limit 5")
     List<DataShares> getTestDataShares();
 
 

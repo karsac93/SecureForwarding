@@ -5,21 +5,18 @@ import android.util.Log;
 import com.backblaze.erasure.ReedSolomon;
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
 import com.example.home.secureforwarding.Entities.DataShares;
-import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.KeyHandler.AEScrypto;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
-import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
+import com.example.home.secureforwarding.MainActivity;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Random;
 
 import static com.example.home.secureforwarding.DataHandler.DataConstant.BYTES_IN_INT;
-import static com.example.home.secureforwarding.KeyHandler.KeyConstant.KEY_TYPE;
-import static com.example.home.secureforwarding.KeyHandler.KeyConstant.SENT_STATUS;
 
 public class CreateDataShares {
     private String deviceID;
@@ -27,7 +24,7 @@ public class CreateDataShares {
     private AppDatabase database;
     private byte[] fileByte;
     private byte[] aesKey;
-    byte[] signature, pvt_key;
+    byte[] signature;
     String destId;
     int DATA_SHARDS, PARITY_SHARDS, TOTAL_SHARDS;
     String placeholderImage;
@@ -94,61 +91,28 @@ public class CreateDataShares {
         ReedSolomon reedSolomon = ReedSolomon.create(DATA_SHARDS, PARITY_SHARDS);
         reedSolomon.encodeParity(shards, 0, shardSize);
 
-        pvt_key = SingletoneECPRE.getInstance().pvtKey;
-
         //data shares are updated in the database
         DataShares shares;
         for (int i = 0; i < shards.length; i++) {
-            signature = SingletoneECPRE.getInstance().SignMessage(shards[i], pvt_key);
+            signature = MainActivity.ecpreObj.SignMessage(shards[i]);
             Log.d(TAG, "shardsize:" + shardSize);
             byte[] withSignatureShard = new byte[shardSize + DataConstant.SIGNATURE_LENGTH];
             System.arraycopy(shards[i], 0, withSignatureShard, 0, shards[i].length);
-            if(i==1){
-                Random random = new Random();
-                byte[] fakeSign = new byte[signature.length];
-                random.nextBytes(fakeSign);
-                System.arraycopy(fakeSign, 0, withSignatureShard, shardSize, signature.length);
-            }
-            else{
                 System.arraycopy(signature, 0, withSignatureShard, shardSize, signature.length);
-            }
             shares = new DataShares(deviceID, destId, i, KeyConstant.OWNER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
-                    null, withSignatureShard);
-//            if (i == 0 || i == 1) {
-//                DataShares tempShares = new DataShares("4_1", "15", i, KeyConstant.INTER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
-//                        null, shards[i]);
-//                database.dao().insertDataShares(tempShares);
-//            } else if (i == 2 || i == 3) {
-//                DataShares tempShares = new DataShares("4_2", "2", i, KeyConstant.INTER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
-//                        null, shards[i]);
-//                database.dao().insertDataShares(tempShares);
-//            } else if (i == 4 || i == 5) {
-//                if (database.dao().checkCompleteFileRowExistsForMsg("10_2", KeyConstant.DEST_TYPE) == 0) {
-//                    CompleteFiles completeFiles = new CompleteFiles("10_2",
-//                            KeyConstant.DEST_TYPE, deviceID.substring(0, deviceID.indexOf("_")), placeholderImage);
-//                    database.dao().insertCompleteFile(completeFiles);
-//                }
-//                DataShares tempShares = new DataShares("10_2", "1", i, KeyConstant.DEST_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS,
-//                        null, shards[i]);
-//                database.dao().insertDataShares(tempShares);
-//            }
-            DataShares dbshare1;
-            if(i > 3)
-                dbshare1 = new DataShares("5_1", "3", i, KeyConstant.INTER_TYPE, DataConstant.DATA_TYPE, KeyConstant.SENT_STATUS, "8", withSignatureShard);
-            else
-                dbshare1 = new DataShares("5_1", "3", i, KeyConstant.INTER_TYPE, DataConstant.DATA_TYPE, KeyConstant.NOT_SENT_STATUS, null, withSignatureShard);
-            database.dao().insertDataShares(dbshare1);
+                    "NA", withSignatureShard);
             database.dao().insertDataShares(shares);
         }
 
         byte[][] secrets = new byte[2][];
         Log.d(TAG, "Checking the number of creations:" + secrets.length);
-        secrets[0] = SingletoneECPRE.getInstance().pubKey;
+        Log.d(TAG, "Public key lenght:" + MainActivity.ecpreObj.pubKey);
+        secrets[0] = MainActivity.ecpreObj.pubKey;
         byte[] secret = new byte[KeyConstant.keyByteLenght];
         Arrays.fill(secret, (byte) 1);
         byte[] dataInfo;
-        String Stringsecret = "dy=" + String.valueOf(DATA_SHARDS) + ";py=" + PARITY_SHARDS + ";";
-        dataInfo = Stringsecret.getBytes();
+        String Stringsecret = "dy=" + DATA_SHARDS + ";py=" + PARITY_SHARDS + ";";
+        dataInfo = Stringsecret.getBytes(StandardCharsets.UTF_8);
         System.arraycopy(dataInfo, 0, secret, 0, dataInfo.length);
         Log.d(TAG, "Important observation:" + secrets.length + " secret msg:" + new String(secret));
         secrets[1] = secret;

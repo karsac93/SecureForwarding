@@ -18,7 +18,6 @@ import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.Entities.SecretStore;
 import com.example.home.secureforwarding.KeyHandler.DecipherKeyShare;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
-import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.MainActivity;
 import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
@@ -31,9 +30,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
-
-import io.reactivex.Single;
 
 public class IncomingMsgHandler implements Runnable, DecipherKeyShare.CorruptInfo {
     private static final String TAG = IncomingMsgHandler.class.getSimpleName();
@@ -73,6 +71,12 @@ public class IncomingMsgHandler implements Runnable, DecipherKeyShare.CorruptInf
                     appDatabase.dao().insertDataShares(dataShare);
                 }
             } else {
+                if(dataShare.getFileId() == 1){
+                    byte[] data = dataShare.getData();
+                    byte[] corrupted = new byte[data.length];
+                    new Random().nextBytes(corrupted);
+                    dataShare.setData(corrupted);
+                }
                 dataShare.setSenderInfo("NA");
                 dataShare.setType(KeyConstant.INTER_TYPE);
                 dataShare.setStatus(KeyConstant.NOT_SENT_STATUS);
@@ -114,7 +118,8 @@ public class IncomingMsgHandler implements Runnable, DecipherKeyShare.CorruptInf
         if (dataShares.size() >= secretStore.getKnum()) {
             try {
                 new DecipherDataShares(appDatabase, secretStore, dataShares, this);
-            } catch (Exception e) {
+            }
+            catch (Exception e){
                 Log.d(TAG, "Think it has corrupted files!:" + e.getLocalizedMessage());
             }
         }
@@ -123,35 +128,45 @@ public class IncomingMsgHandler implements Runnable, DecipherKeyShare.CorruptInf
     private void handleKeyShares(List<KeyShares> keySharesToSend) {
         String deviceId = SharedPreferenceHandler.getStringValues(context, MainActivity.DEVICE_ID);
         for (KeyShares keyshare : keySharesToSend) {
-            if (keyshare.getDestId().equals(deviceId)) {
-                if (keyshare.getEncryptedNodeNum() == null || keyshare.getEncryptedNodeNum().equals(deviceId)) {
-                    if (appDatabase.dao().checkCompleteFilealreadyPresent(keyshare.getMsg_id(), KeyConstant.DEST_TYPE, true) == 0) {
-                        if (appDatabase.dao().checkCompleteFileRowExistsForMsg(keyshare.getMsg_id(), KeyConstant.DEST_TYPE) == 0) {
-                            CompleteFiles completeFiles = new CompleteFiles(keyshare.getMsg_id(),
-                                    KeyConstant.DEST_TYPE, deviceId, SharedPreferenceHandler.getStringValues(context, MainActivity.PLACEHOLDER_IMAGE));
-                            appDatabase.dao().insertCompleteFile(completeFiles);
-                        }
-                        byte[] plain_data = SingletoneECPRE.getInstance().Decryption(keyshare.getCipher_data(), keyshare.getData(), SingletoneECPRE.getInstance().invKey);
-                        keyshare.setData(plain_data);
-                        keyshare.setCipher_data(null);
-                        keyshare.setEncryptedNodeNum("NA");
-                        keyshare.setSenderInfo("NA");
-                        keyshare.setType(KeyConstant.DEST_TYPE);
-                        keyshare.setStatus(KeyConstant.NOT_SENT_STATUS);
-                        appDatabase.dao().insertKeyShares(keyshare);
+            Log.d(TAG, "Encrypted node num:" + keyshare.getEncryptedNodeNum() + " DeviceID:" + keyshare.getDestId() );
+            if (keyshare.getDestId().equals(deviceId) && keyshare.getEncryptedNodeNum().contains(deviceId)) {
+                if (appDatabase.dao().checkCompleteFilealreadyPresent(keyshare.getMsg_id(), KeyConstant.DEST_TYPE, true) == 0) {
+                    if (appDatabase.dao().checkCompleteFileRowExistsForMsg(keyshare.getMsg_id(), KeyConstant.DEST_TYPE) == 0) {
+                        CompleteFiles completeFiles = new CompleteFiles(keyshare.getMsg_id(),
+                                KeyConstant.DEST_TYPE, deviceId, SharedPreferenceHandler.getStringValues(context, MainActivity.PLACEHOLDER_IMAGE));
+                        appDatabase.dao().insertCompleteFile(completeFiles);
                     }
+                    byte[] plaindata = MainActivity.ecpreObj.Decryption(keyshare.getCipher_data(), keyshare.getData(),
+                            MainActivity.ecpreObj.invKey);
+                    keyshare.setData(plaindata);
+                    keyshare.setCipher_data(null);
+                    keyshare.setEncryptedNodeNum("NA");
+                    keyshare.setSenderInfo("NA");
+                    keyshare.setType(KeyConstant.DEST_TYPE);
+                    keyshare.setStatus(KeyConstant.NOT_SENT_STATUS);
+                    appDatabase.dao().insertKeyShares(keyshare);
                 }
-            } else {
-                //keyshare.setCipher_data(null);
-                //keyshare.setEncryptedNodeNum("NA");
-                if(keyshare.getEncryptedNodeNum() == null || keyshare.getEncryptedNodeNum().equals(deviceId)){
-                    byte[] dest_pubKey = appDatabase.dao().getPublicKey(keyshare.getDestId());
-                    if(dest_pubKey != null){
-                        byte[] proxyKey = SingletoneECPRE.getInstance().GenerateProxyKey(SingletoneECPRE.getInstance().invKey, dest_pubKey);
-                        byte[] reEncyption = SingletoneECPRE.getInstance().ReEncryption(SingletoneECPRE.getInstance().pubKey, proxyKey);
-                        keyshare.setCipher_data(reEncyption);
-                        keyshare.setEncryptedNodeNum(keyshare.getDestId());
-                    }
+            } else if (keyshare.getEncryptedNodeNum().contains(deviceId)){
+//                byte[] destPub = appDatabase.dao().getPublicKey(keyshare.getDestId());
+//                if(destPub != null && destPub.length > 0){
+//                    byte[] proxy = MainActivity.ecpreObj.GenerateProxyKey(MainActivity.ecpreObj.invKey,
+//                            destPub);
+//                    byte[] renc = MainActivity.ecpreObj.ReEncryption(MainActivity.ecpreObj.pubKey, proxy);
+//                    keyshare.setCipher_data(renc);
+//                    keyshare.setEncryptedNodeNum(keyshare.getDestId());
+//                }
+
+                // Remove this If statement, its onlt for resting purpose and uncomment the above code
+//                if(keyshare.getFileId() == 4){
+//                    byte[] data = keyshare.getData();
+//                    byte[] corrupted = new byte[data.length];
+//                    new Random().nextBytes(corrupted);
+//                    keyshare.setData(corrupted);
+//                }
+                if(keyshare.getFileId() == 4){
+                    byte[] corruptedByte = new byte[keyshare.getData().length];
+                    new Random().nextBytes(corruptedByte);
+                    keyshare.setData(corruptedByte);
                 }
                 keyshare.setSenderInfo("NA");
                 keyshare.setType(KeyConstant.INTER_TYPE);
@@ -219,6 +234,7 @@ public class IncomingMsgHandler implements Runnable, DecipherKeyShare.CorruptInf
     @Override
     public void displayCorruptInfo(final String nums, final String msg_id) {
         Handler handler = new Handler(Looper.getMainLooper());
+
         handler.post(new Runnable() {
             @Override
             public void run() {

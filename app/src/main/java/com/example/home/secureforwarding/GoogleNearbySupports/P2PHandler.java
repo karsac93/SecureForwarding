@@ -11,15 +11,13 @@ import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
-import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
+import com.example.home.secureforwarding.MainActivity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import static com.example.home.secureforwarding.MainActivity.DEVICE_ID;
 
 public class P2PHandler implements Serializable {
     String id;
@@ -33,30 +31,51 @@ public class P2PHandler implements Serializable {
         this.otherPubKey = otherPubKey;
         this.context = context;
         appDatabase = AppDatabase.getAppDatabase(context);
-        singletoneECPRE = SingletoneECPRE.getInstance();
+        singletoneECPRE = MainActivity.ecpreObj;
     }
 
     public SharesPOJO fetchFilesToSend() {
-        HashMap<String, String> completeFiles = getCompleteFiles();
-        List<KeyShares> keyShares = appDatabase.dao().getKeySharesForThisDevice(KeyConstant.NOT_SENT_STATUS, id, KeyConstant.DEST_TYPE);
-        keyShares.addAll(appDatabase.dao().getKeySharesEncryptedWithDevice(KeyConstant.NOT_SENT_STATUS, id, KeyConstant.DEST_TYPE));
-        keyShares.addAll(appDatabase.dao().getKeySharesForDestDevice(KeyConstant.DEST_TYPE, id, KeyConstant.NOT_SENT_STATUS));
-        for (KeyShares keyShare : keyShares) {
-            if(keyShare.getEncryptedNodeNum().equals(SharedPreferenceHandler.getStringValues(context, DEVICE_ID))){
-                byte[] proxyKey = SingletoneECPRE.getInstance().GenerateProxyKey(SingletoneECPRE.getInstance().invKey, otherPubKey);
-                byte[] proxyReEncryption = SingletoneECPRE.getInstance().ReEncryption(SingletoneECPRE.getInstance().pubKey, proxyKey);
-                keyShare.setCipher_data(proxyReEncryption);
+//        HashMap<String, String> completeFiles = getCompleteFiles();
+//        List<KeyShares> keyShares = appDatabase.dao().getKeySharesForThisDevice(KeyConstant.NOT_SENT_STATUS, id, KeyConstant.DEST_TYPE);
+//        keyShares.addAll(appDatabase.dao().getKeySharesEncryptedWithDevice(KeyConstant.NOT_SENT_STATUS, id, KeyConstant.DEST_TYPE));
+//        keyShares.addAll(appDatabase.dao().getKeySharesForDestDevice(KeyConstant.DEST_TYPE, id, KeyConstant.NOT_SENT_STATUS));
+//        for(KeyShares keyShare : keyShares){
+//            if(keyShare.getEncryptedNodeNum() == null) {
+//                byte[] proxyKey = singletoneECPRE.GenerateProxyKey(singletoneECPRE.invKey, otherPubKey);
+//                byte[] renec = singletoneECPRE.ReEncryption(singletoneECPRE.pubKey, proxyKey);
+//                keyShare.setCipher_data(renec);
+//                keyShare.setEncryptedNodeNum(id);
+//            }
+//            keyShare.setSenderInfo(id);
+//            keyShare.setStatus(KeyConstant.SENT_STATUS);
+//            appDatabase.dao().updateKeyShare(keyShare);
+//        }
+//        List<DataShares> dataShares = getDataShares(id);
+//        SharesPOJO shares = new SharesPOJO(keyShares, dataShares, completeFiles);
+//        return shares;
+
+        List<KeyShares> keyShares = appDatabase.dao().getTestShares();
+        for(KeyShares keyShare : keyShares){
+            if(keyShare.getEncryptedNodeNum().contains("NA") && appDatabase.dao().getKeyStores().size() <= 1) {
+                byte[] proxyKey = singletoneECPRE.GenerateProxyKey(singletoneECPRE.invKey, otherPubKey);
+                byte[] renec = singletoneECPRE.ReEncryption(singletoneECPRE.pubKey, proxyKey);
+                keyShare.setCipher_data(renec);
+                keyShare.setEncryptedNodeNum(id);
             }
             keyShare.setSenderInfo(id);
             keyShare.setStatus(KeyConstant.SENT_STATUS);
             //appDatabase.dao().updateKeyShare(keyShare);
         }
-        List<DataShares> dataShares = getDataShares(id);
-        SharesPOJO shares = new SharesPOJO(keyShares, dataShares, completeFiles);
-        return shares;
 
-//        SharesPOJO shares = new SharesPOJO(appDatabase.dao().getTestShares(), appDatabase.dao().getTestDataShares(), new HashMap<String, String>());
-//        return shares;
+        List<DataShares> dataShares = appDatabase.dao().getTestDataShares();
+        for(DataShares dataShare : dataShares){
+            dataShare.setStatus(KeyConstant.SENT_STATUS);
+            dataShare.setSenderInfo(id);
+            //appDatabase.dao().updateDataShare(dataShare);
+        }
+
+        SharesPOJO shares = new SharesPOJO(keyShares, dataShares, new HashMap<String, String>());
+        return shares;
     }
 
     private List<DataShares> getDataShares(String id) {
@@ -65,10 +84,10 @@ public class P2PHandler implements Serializable {
                 KeyConstant.NOT_SENT_STATUS, KeyConstant.DEST_TYPE, id));
         dataShares.addAll(appDatabase.dao().getDataSharesForThisDestDevice(
                 KeyConstant.NOT_SENT_STATUS, KeyConstant.DEST_TYPE, id));
-        for (DataShares dataShare : dataShares) {
+        for(DataShares dataShare : dataShares){
             dataShare.setStatus(KeyConstant.SENT_STATUS);
             dataShare.setSenderInfo(id);
-            //appDatabase.dao().updateDataShare(dataShare);
+            appDatabase.dao().updateDataShare(dataShare);
         }
         return dataShares;
 //        return null;
@@ -78,11 +97,12 @@ public class P2PHandler implements Serializable {
     private HashMap<String, String> getCompleteFiles() {
         HashMap<String, String> mapCompleteFiles = new HashMap<>();
         List<CompleteFiles> completeFiles = appDatabase.dao().getCompleteFilesForDevice(KeyConstant.OWNER_TYPE, id);
-        for (CompleteFiles completeFile : completeFiles) {
-//            appDatabase.dao().deleteDataSharesForMsg(completeFile.getId());
-//            appDatabase.dao().deleteKeySharesForMsg(completeFile.getId());
-//            appDatabase.dao().deleteCompleteFileId(completeFile);
-            Bitmap bitmap = BitmapFactory.decodeFile(completeFile.getFilePath());
+        for(CompleteFiles completeFile : completeFiles){
+            appDatabase.dao().deleteDataSharesForMsg(completeFile.getId());
+            appDatabase.dao().deleteKeySharesForMsg(completeFile.getId());
+            appDatabase.dao().deleteCompleteFileId(completeFile);
+            //Bitmap bitmap = BitmapFactory.decodeFile(completeFile.getFilePath());
+            Bitmap bitmap = BitmapFactory.decodeFile("/storage/emulated/0/SecureForwarding/OwnMessage/ 1_6.jpg");
             ByteArrayOutputStream byteArrayOS = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOS);
             mapCompleteFiles.put(completeFile.getId(), Base64.encodeToString(byteArrayOS.toByteArray(), Base64.DEFAULT));

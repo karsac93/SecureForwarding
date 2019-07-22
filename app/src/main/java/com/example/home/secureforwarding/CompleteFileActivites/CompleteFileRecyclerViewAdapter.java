@@ -1,22 +1,16 @@
 package com.example.home.secureforwarding.CompleteFileActivites;
 
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.CompleteFileActivites.CompleteFileFragment.OnListFragmentInteractionListener;
+import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.R;
-import com.example.home.secureforwarding.ShowImageActivity;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -49,6 +43,7 @@ public class CompleteFileRecyclerViewAdapter extends RecyclerView.Adapter<Comple
         Log.d("ImageAdapter", holder.completeFiles.toString());
         File file = new File(holder.completeFiles.getFilePath());
         if (file.exists()) {
+            Log.d(TAG, "file path:" + file.getAbsolutePath());
             Picasso.get().load(file).fit().centerInside().into(holder.imageView);
             holder.fileName.setText(file.getName());
             if(file.getName().contains("placeholder"))

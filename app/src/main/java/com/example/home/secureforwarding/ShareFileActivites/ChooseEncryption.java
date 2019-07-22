@@ -1,7 +1,8 @@
 package com.example.home.secureforwarding.ShareFileActivites;
 
-import android.support.v7.app.AppCompatActivity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -13,7 +14,6 @@ import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.Entities.KeyStore;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.R;
-import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import org.apache.commons.lang3.SerializationUtils;
 
@@ -22,8 +22,6 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-
-import static com.example.home.secureforwarding.MainActivity.DEVICE_ID;
 
 public class ChooseEncryption extends AppCompatActivity {
 
@@ -37,9 +35,10 @@ public class ChooseEncryption extends AppCompatActivity {
 
     AppDatabase database;
     KeyShares share;
-    String deviceID;
 
     SingletoneECPRE ecpre;
+    MyKeySharesRecyclerViewAdapter.OnListKeyFragmentInteractionListener listener;
+    int position;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,11 +46,12 @@ public class ChooseEncryption extends AppCompatActivity {
         setContentView(R.layout.activity_choose_encryption);
         ButterKnife.bind(this);
 
-        ecpre = SingletoneECPRE.getInstance();
+        ecpre = SingletoneECPRE.getInstance(null);
 
         Bundle bundle = getIntent().getExtras();
         byte[] shareObject = bundle.getByteArray(ShareFilesActivity.SEND_SHARE_KEY);
         share = SerializationUtils.deserialize(shareObject);
+        position = bundle.getInt(ShareFilesActivity.POS);
         Log.d(TAG, "Shares obtained in new Activity:" + share.getType());
 
         database = AppDatabase.getAppDatabase(this);
@@ -59,8 +59,6 @@ public class ChooseEncryption extends AppCompatActivity {
         ArrayAdapter<KeyStore> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, keystore);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         nodeSpinner.setAdapter(adapter);
-
-        deviceID = SharedPreferenceHandler.getStringValues(this, DEVICE_ID);
     }
 
     /**
@@ -79,19 +77,28 @@ public class ChooseEncryption extends AppCompatActivity {
             return;
         }
 
-        byte[] invKey = ecpre.invKey;
-        byte[] pubKey = ecpre.pubKey;
-        if (share.getEncryptedNodeNum() == null || share.getEncryptedNodeNum().length() == 0) {
-            byte[] encrypted_data = ecpre.Encryption(share.getData());
-            share.setData(encrypted_data);
-        }
 
-        byte[] proxyKey = ecpre.GenerateProxyKey(invKey, publicKey);
-        byte[] proxyReEncyption = ecpre.ReEncryption(pubKey, proxyKey);
+        byte[] proxyKey = ecpre.GenerateProxyKey(ecpre.invKey, publicKey);
+        byte[] proxyReEncyption = ecpre.ReEncryption(ecpre.pubKey, proxyKey);
+
         share.setCipher_data(proxyReEncyption);
-
+        Log.d(TAG, "Keystore obj:" + keystoreObj.getId());
         share.setEncryptedNodeNum(keystoreObj.getId());
         database.dao().updateKeyShare(share);
         Toast.makeText(this, "A proxy key is generated with chosen node for this share!", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent();
+        Bundle bundle = new Bundle();
+        byte[] shareByte = SerializationUtils.serialize(share);
+        bundle.putByteArray(ShareFilesActivity.SEND_SHARE_KEY, shareByte);
+        bundle.putInt(ShareFilesActivity.POS, position);
+        intent.putExtras(bundle);
+        setResult(ShareFilesActivity.REQ, intent);
+        finish();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
     }
 }

@@ -2,6 +2,7 @@ package com.example.home.secureforwarding;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -84,6 +85,7 @@ public class DetailActivity extends AppCompatActivity {
             String dest = destId.getText().toString().trim();
             AEScrypto aesCrypto = new AEScrypto();
             byte[] key = aesCrypto.GenerateKey();
+            Log.d(TAG, "AES Secret Key for this msg:" + Base64.encodeToString(key, Base64.DEFAULT));
             byte[] fileByte = new byte[(int) value.length()];
             try {
                 FileInputStream fileInputStream = new FileInputStream(value);
@@ -129,8 +131,9 @@ public class DetailActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         database = AppDatabase.getAppDatabase(this);
-        file = (File) getIntent().getSerializableExtra(MainActivity.INTENT_IMG);
-        Log.d(TAG, "Obtained file:" + file.getName());
+        String filePath = getIntent().getStringExtra(MainActivity.INTENT_IMG);
+        file = new File(filePath);
+        //Log.d(TAG, "Obtained file:" + file.getName());
 
         prefRadioButtons.get(0).setChecked(true);
         Picasso.get().load(file).fit().centerInside().into(imageView);

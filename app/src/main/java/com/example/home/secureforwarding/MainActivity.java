@@ -2,7 +2,6 @@ package com.example.home.secureforwarding;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -19,13 +18,11 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -62,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String INTENT_IMG = "imgFile";
     public static final String DATA_DECODE_SKIP = "data_decode";
     public static final String PLACEHOLDER_IMAGE = "placeholder";
+    public static SingletoneECPRE ecpreObj;
 
     /**
      * File - create a file before taking picture and save it for performing data sharing
@@ -305,10 +303,10 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == CAMERA_REQUEST) {
             if (resultCode != RESULT_CANCELED) {
                 Intent intent = new Intent(MainActivity.this, DetailActivity.class);
-                intent.putExtra(INTENT_IMG, file);
+                intent.putExtra(INTENT_IMG, file.getAbsolutePath());
                 startActivity(intent);
             } else {
-                file.delete();
+                //file.delete();
             }
         }
     }
@@ -345,8 +343,8 @@ public class MainActivity extends AppCompatActivity {
         String fname = id.substring(id.indexOf(":") + 1, id.length()) + "_" + fileNum + ".jpg";
         file = new File(myDir, fname);
         Log.i(TAG, "" + file);
-        if (file.exists())
-            file.delete();
+//        if (file.exists())
+//            file.delete();
     }
 
     /**
@@ -445,13 +443,85 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void run() {
-            SingletoneECPRE ecpre = SingletoneECPRE.getInstance();
-            if (SharedPreferenceHandler.getStringValues(context, SingletoneECPRE.PREF_EC_PARAM).length() == 0) {
-                ecpre = SingletoneECPRE.getInstance();
-                ecpre.initialize(true, context);
-            } else {
-                ecpre.initialize(false, context);
+            String text = "hello world!";
+            ecpreObj = SingletoneECPRE.getInstance(context);
+            if(SharedPreferenceHandler.getStringValues(context, SingletoneECPRE.PREF_PUB_KEY)
+                    .trim().length() == 0){
+                Log.d(TAG, "here");
+                byte[][] keys = ecpreObj.GenerateKey();
+                ecpreObj.pvtKey = keys[0];
+                ecpreObj.pubKey = keys[1];
+                ecpreObj.invKey = keys[2];
+                try {
+                    String pubPath = SDFileHandler.createFile(SingletoneECPRE.PREF_PUB_KEY,
+                            "", ecpreObj.pubKey).getAbsolutePath();
+                    String invPath = SDFileHandler.createFile(SingletoneECPRE.PREF_INV_KEY,
+                            "", ecpreObj.invKey).getAbsolutePath();
+
+                    String pvtPath = SDFileHandler.createFile(SingletoneECPRE.PREF_PVT_KEY,
+                            "", ecpreObj.pvtKey).getAbsolutePath();
+
+                    SharedPreferenceHandler.setStringValues(context, SingletoneECPRE.PREF_PUB_KEY,
+                            pubPath);
+                    SharedPreferenceHandler.setStringValues(context, SingletoneECPRE.PREF_INV_KEY,
+                            invPath);
+                    SharedPreferenceHandler.setStringValues(context, SingletoneECPRE.PREF_PVT_KEY,
+                            pvtPath);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
+            else{
+                Log.d(TAG, "Heyy here!!");
+                ecpreObj.pubKey = SDFileHandler.readFile(SharedPreferenceHandler.getStringValues(context,
+                        SingletoneECPRE.PREF_PUB_KEY));
+                ecpreObj.invKey = SDFileHandler.readFile(SharedPreferenceHandler.getStringValues(context,
+                        SingletoneECPRE.PREF_INV_KEY));
+                ecpreObj.pvtKey = SDFileHandler.readFile(SharedPreferenceHandler.getStringValues(context,
+                        SingletoneECPRE.PREF_PVT_KEY));
+            }
+
+//            Log.d(TAG, ecpreObj.toString());
+//            AEScrypto aes = new AEScrypto();
+//            byte[] aesKey = aes.GenerateKey();
+//            AppDatabase database = AppDatabase.getAppDatabase(context);
+//            byte[][] secrets = new byte[2][KeyConstant.keyByteLenght];
+//            CreateKeyShares keySharesObj = new CreateKeyShares("1_1", KeyConstant.DEST_TYPE,
+//                    database, aesKey, secrets, "2");
+//            keySharesObj.generateKeyShares();
+//            List<KeyShares> keyShares = keySharesObj.getDBShare();
+//
+//            SingletoneECPRE ecpre1 = new SingletoneECPRE(context);
+//            byte[][] nodeB = ecpre1.GenerateKey();
+//            byte[] ciphertext = ecpreObj.Encryption(text.getBytes());
+//            byte[] proxykey = ecpreObj.GenerateProxyKey(ecpreObj.invKey, nodeB[1]);
+//            byte[] ren = ecpreObj.ReEncryption(ecpreObj.pubKey, proxykey);
+//
+//            for(KeyShares keyShares1 : keyShares){
+//                keyShares1.setCipher_data(ren);
+//            }
+//
+//            byte[] plaintext = ecpre1.Decryption(ren, ciphertext, nodeB[2]);
+//            Log.d(TAG, "ASNSNSSSSSSSSSSSSSS:" + new String(plaintext));
+//
+//            for(KeyShares keyShares1 : keyShares){
+//                byte[] plaindata = ecpreObj.Decryption(keyShares1.getCipher_data(), keyShares1.getData(), nodeB[2]);
+//                Log.d(TAG, Base64.encodeToString(plaindata, Base64.DEFAULT) + " " + keyShares1.getData().length);
+//                keyShares1.setData(plaindata);
+//            }
+//
+//            DecipherKeyShare decipherKeyShare = new DecipherKeyShare(keyShares, database, new IncomingMsgHandler());
+//            decipherKeyShare.decipher();
+//
+//            System.out.println(ecpreObj.toString() + " " + ecpre1.toString());
+//
+//            Log.d(TAG, new String(plaintext));
+//
+//            byte[] sign = ecpreObj.SignMessage(text.getBytes());
+//            SingletoneECPRE ecpre1 = new SingletoneECPRE(context);
+//            byte[][] nodeB = ecpre1.GenerateKey();
+//            boolean flag = ecpre1.VerifySignature(text.getBytes(), sign, ecpreObj.pubKey);
+//            Log.d(TAG, "Flag:" + flag);
         }
     }
 }

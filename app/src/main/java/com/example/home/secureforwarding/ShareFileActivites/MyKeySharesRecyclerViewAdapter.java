@@ -10,19 +10,20 @@ import android.widget.TextView;
 import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.R;
-import com.example.home.secureforwarding.ShareFileActivites.SharesFragment.OnListKeyFragmentInteractionListener;
 
 import java.util.List;
 
 public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySharesRecyclerViewAdapter.ViewHolder> {
 
     public static final String TAG = MyKeySharesRecyclerViewAdapter.class.getSimpleName();
-    private final List<DataShares> shares;
+    public static List<DataShares> shares;
     private final OnListKeyFragmentInteractionListener mListener;
+    MyKeySharesRecyclerViewAdapter context;
 
     public MyKeySharesRecyclerViewAdapter(List<DataShares> shares, OnListKeyFragmentInteractionListener listener) {
         this.shares = shares;
         mListener = listener;
+        context = this;
     }
 
     @Override
@@ -33,7 +34,7 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
     }
 
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
+    public void onBindViewHolder(final ViewHolder holder, final int position) {
         holder.shareFile = shares.get(position);
         DataShares dataShare = null;
 
@@ -80,7 +81,7 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
                 if (null != mListener) {
                     Log.d(TAG, "Instances:" + holder.shareFile.getClass().getSimpleName());
                     if (finalDataShare instanceof KeyShares)
-                        mListener.onListFragmentInteraction(finalDataShare);
+                        mListener.onListFragmentInteraction(finalDataShare, position);
                 }
             }
         });
@@ -117,5 +118,10 @@ public class MyKeySharesRecyclerViewAdapter extends RecyclerView.Adapter<MyKeySh
             proxyTxt = view.findViewById(R.id.proxyTxt);
             encryptedNum = view.findViewById(R.id.share_encyptedNum);
         }
+    }
+
+    public interface OnListKeyFragmentInteractionListener {
+        // TODO: Update argument type and name
+        void onListFragmentInteraction(DataShares share, int position);
     }
 }

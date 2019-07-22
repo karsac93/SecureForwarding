@@ -1,6 +1,7 @@
 package com.example.home.secureforwarding.ShareFileActivites;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
@@ -16,27 +17,29 @@ import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
 import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
+import com.example.home.secureforwarding.MainActivity;
 import com.example.home.secureforwarding.R;
+import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
-import java.util.ArrayList;
+import org.apache.commons.lang3.SerializationUtils;
+
 import java.util.List;
 
-/**
- * A fragment representing a list of Items.
- * <p/>
- * Activities containing this fragment MUST implement the {@link OnListKeyFragmentInteractionListener}
- * interface.
- */
-public class SharesFragment extends Fragment {
+
+public class SharesFragment extends Fragment implements MyKeySharesRecyclerViewAdapter.OnListKeyFragmentInteractionListener {
 
     // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
     // TODO: Customize parameters
     private int mColumnCount = 1;
-    private OnListKeyFragmentInteractionListener mListener;
+    private MyKeySharesRecyclerViewAdapter.OnListKeyFragmentInteractionListener mListener;
     Context context;
     String msg_id;
     List<DataShares> dataShares;
+    MyKeySharesRecyclerViewAdapter adapter;
+    AppDatabase database;
+    RecyclerView recyclerView;
+    boolean check = false;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -55,10 +58,11 @@ public class SharesFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_shares_list, container, false);
+        mListener = this;
         Bundle bundle = getArguments();
         msg_id = bundle.getString(CompleteFileActivity.MSG_ID);
         Log.d("=======", msg_id);
-        AppDatabase database = AppDatabase.getAppDatabase(context);
+        database = AppDatabase.getAppDatabase(context);
         if (msg_id != KeyConstant.INTER_TYPE) {
             dataShares = database.dao().getDataShareForMsg(msg_id);
             dataShares.addAll(database.dao().getKeyShareForMsg(msg_id));
@@ -68,15 +72,17 @@ public class SharesFragment extends Fragment {
         }
 
         // Set the adapter
+        adapter = new MyKeySharesRecyclerViewAdapter(dataShares, mListener);
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
-            RecyclerView recyclerView = (RecyclerView) view;
+            //RecyclerView recyclerView = (RecyclerView) view;
+            recyclerView = (RecyclerView) view;
             if (mColumnCount <= 1) {
                 recyclerView.setLayoutManager(new LinearLayoutManager(context));
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new MyKeySharesRecyclerViewAdapter(dataShares, mListener));
+            recyclerView.setAdapter(adapter);
         }
         return view;
     }
@@ -85,12 +91,6 @@ public class SharesFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnListKeyFragmentInteractionListener) {
-            mListener = (OnListKeyFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnListKeyFragmentInteractionListener");
-        }
     }
 
     @Override
@@ -109,8 +109,44 @@ public class SharesFragment extends Fragment {
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public interface OnListKeyFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onListFragmentInteraction(DataShares share);
+
+    @Override
+    public void onResume() {
+        super.onResume();
     }
+
+    @Override
+    public void onListFragmentInteraction(DataShares dataShare, int position) {
+        KeyShares share = (KeyShares) dataShare;
+        String id = SharedPreferenceHandler.getStringValues(getContext(),  MainActivity.DEVICE_ID);
+        if(share.getType().contains(KeyConstant.OWNER_TYPE) || share.getEncryptedNodeNum().contains(id)){
+            Intent intent = new Intent(getContext(), ChooseEncryption.class);
+            Bundle bundle = new Bundle();
+            byte[] shareByte = SerializationUtils.serialize(share);
+            bundle.putByteArray(ShareFilesActivity.SEND_SHARE_KEY, shareByte);
+            bundle.putInt(ShareFilesActivity.POS, position);
+            intent.putExtras(bundle);
+            startActivityForResult(intent, ShareFilesActivity.REQ);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        super.onActivityResult(requestCode, resultCode, data);
+        // check if the request code is same as what is passed  here it is 2
+        Log.d("HEopee", "Result code:" + resultCode);
+        if(requestCode==ShareFilesActivity.REQ && resultCode == ShareFilesActivity.REQ)
+        {
+            Bundle bundle = data.getExtras();
+            byte[] shareObject = bundle.getByteArray(ShareFilesActivity.SEND_SHARE_KEY);
+            KeyShares share = SerializationUtils.deserialize(shareObject);
+            Log.d("HEopee", "In Listener:" + share.getEncryptedNodeNum());
+            int position = bundle.getInt(ShareFilesActivity.POS);
+            dataShares.set(position, share);
+            adapter.notifyItemChanged(position);
+
+        }
+    }
+
 }

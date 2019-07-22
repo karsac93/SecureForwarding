@@ -30,6 +30,8 @@ public class AEScrypto {
         }
 
         return String.valueOf(randStr).getBytes();
+//        String aes = Base64.encodeToString(randStr.toString().getBytes(), Base64.DEFAULT);
+//        return aes;
     }
 
     public void GenerateInitVector() {
