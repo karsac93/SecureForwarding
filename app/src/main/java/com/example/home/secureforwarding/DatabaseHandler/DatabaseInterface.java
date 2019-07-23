@@ -84,7 +84,8 @@ public interface DatabaseInterface {
             "node_type<>:destType group by msg_id)")
     List<KeyShares> getKeySharesEncryptedWithDevice(int status, String nodeId, String destType);
 
-    @Query("select * from keyshares where node_type<>:nodeType and dest_id=:nodeId and status=:status")
+    @Query("select * from keyshares where node_type<>:nodeType and dest_id=:nodeId and status=:status" +
+            " and encrypted_node_num=:nodeId")
     List<KeyShares> getKeySharesForDestDevice(String nodeType, String nodeId, int status);
 
     @Query("select * from datashares where file_id in (select min(file_id) from datashares " +
