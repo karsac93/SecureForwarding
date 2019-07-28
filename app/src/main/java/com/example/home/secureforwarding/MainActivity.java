@@ -117,6 +117,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Checks write permission to save placeholder image
+     */
     private void checkWritePermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0024);
@@ -125,6 +128,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Saves placeholder image in the internal storage of the device
+     * Used when original image is not yet retrieved
+     */
     private void createAndSavePlaceHolder() {
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.placeholder1);
         String root = Environment.getExternalStorageDirectory().toString();
@@ -148,11 +155,18 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Initializes Elliptic curve instance which can be used by all other classes
+     */
     private void initializeEcpre() {
         InitializeEcpr initializeEcpr = new InitializeEcpr(this);
         initializeEcpr.run();
     }
 
+    /**
+     * If device ID is not stored in Shared Preferences asks user to connect
+     * to internet and retrieve the ID
+     */
     private void checkDeviceId() {
         if (SharedPreferenceHandler.getStringValues(this, DEVICE_ID).length() == 0) {
             displayDeviceid.setText("Device ID: Please set device ID");
@@ -167,6 +181,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * The menu on right side of the homescreen is displayed through this override method
+     * @param menu - Menu inflated with R.menu.sf_menu
+     * @return
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = this.getMenuInflater();
@@ -174,6 +193,11 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * When any of the menu item is selected this method will be automatically invoked
+     * @param item
+     * @return
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         AppDatabase database = AppDatabase.getAppDatabase(this);
@@ -298,6 +322,12 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(cameraIntent, CAMERA_REQUEST);
     }
 
+    /**
+     * This method is called when the user has selected an image from the gallery
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, final Intent data) {
         if (requestCode == CAMERA_REQUEST) {
@@ -322,6 +352,9 @@ public class MainActivity extends AppCompatActivity {
         startService(intent);
     }
 
+    /**
+     * Stops the Google Nearby Connections service
+     */
     @OnClick(R.id.disable)
     public void stopGoogleNearbyService() {
         Toast.makeText(this, "Device no longer connects or visible to other device!",
@@ -427,6 +460,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Once the deviceID is obtained, certain elements are hidden and some are displayed
+     * @param val
+     */
     private void setHomeScreen(int val) {
         displayDeviceid.setText("Device ID: " + val);
         internetMsg.setVisibility(View.GONE);
@@ -434,6 +471,10 @@ public class MainActivity extends AppCompatActivity {
         setVisibilityToElements(View.VISIBLE);
     }
 
+    /**
+     * Runnable class, but instead of creating a thread, I'm just running it in MainActivity
+     * as it doesnt take a lot of time
+     */
     class InitializeEcpr implements Runnable {
         Context context;
 
@@ -445,6 +486,7 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             String text = "hello world!";
             ecpreObj = SingletoneECPRE.getInstance(context);
+            // if pub keys are not already generated, they are generated
             if(SharedPreferenceHandler.getStringValues(context, SingletoneECPRE.PREF_PUB_KEY)
                     .trim().length() == 0){
                 Log.d(TAG, "here");
@@ -471,6 +513,8 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
+
+            //public/private and inv keys are already created, hence reading them from file storage
             else{
                 Log.d(TAG, "Heyy here!!");
                 ecpreObj.pubKey = SDFileHandler.readFile(SharedPreferenceHandler.getStringValues(context,

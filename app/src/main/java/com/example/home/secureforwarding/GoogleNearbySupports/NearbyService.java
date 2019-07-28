@@ -92,12 +92,13 @@ public class NearbyService extends Service {
     }
 
     private void startDiscovery() {
+        connectionsClient.stopDiscovery();
         connectionsClient.startDiscovery(getPackageName(), endpointDiscoveryCallback,
                 new DiscoveryOptions.Builder().setStrategy(STRATEGY).build());
     }
 
     private void startAdvertising() {
-
+        connectionsClient.stopAdvertising();
         connectionsClient.startAdvertising(id, getPackageName(), connectionLifecycleCallback,
                 new AdvertisingOptions.Builder().setStrategy(STRATEGY).build());
     }
