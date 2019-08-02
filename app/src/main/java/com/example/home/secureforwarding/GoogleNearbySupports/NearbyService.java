@@ -237,7 +237,7 @@ public class NearbyService extends Service {
             if (payload.getType() == Payload.Type.BYTES) {
                 String msg = new String(payload.asBytes());
                 if (receivedMsg == true && msg.contains(MSG_RECIVED)) {
-                    updateKeysData(pojo);
+                    //updateKeysData(pojo);
                     Toast.makeText(NearbyService.this, "File transferred!", Toast.LENGTH_SHORT).show();
                     setFlagsFalse();
                     connectionsClient.stopAllEndpoints();

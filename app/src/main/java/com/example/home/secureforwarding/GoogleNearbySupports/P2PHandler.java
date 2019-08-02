@@ -79,14 +79,14 @@ public class P2PHandler implements Serializable {
                 }
                 keyShare.setSenderInfo(id);
                 keyShare.setStatus(KeyConstant.SENT_STATUS);
-                //appDatabase.dao().updateKeyShare(keyShare);
+                appDatabase.dao().updateKeyShare(keyShare);
             }
 
 
             for(DataShares dataShare : dataShares){
                 dataShare.setStatus(KeyConstant.SENT_STATUS);
                 dataShare.setSenderInfo(id);
-                //appDatabase.dao().updateDataShare(dataShare);
+                appDatabase.dao().updateDataShare(dataShare);
             }
         }
         else{

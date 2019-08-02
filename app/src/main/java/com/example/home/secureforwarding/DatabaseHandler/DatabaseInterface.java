@@ -137,7 +137,7 @@ public interface DatabaseInterface {
     @Query("select * from keyshares where status=0 and encrypted_node_num=:encryptedNodeNum limit 1")
     List<KeyShares> getOneKeyshare(String encryptedNodeNum);
 
-    @Query("select * from datashares where status=0")
+    @Query("select * from datashares where status=0 limit 1")
     List<DataShares> getOneDataShare();
 
 
