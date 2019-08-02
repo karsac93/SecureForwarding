@@ -71,7 +71,8 @@ public class P2PHandler implements Serializable {
                 dataShares = appDatabase.dao().getOneDataShare();
             }
             for(KeyShares keyShare : keyShares){
-                if(keyShare.getEncryptedNodeNum().contains("NA") && appDatabase.dao().getKeyStores().size() <= 1) {
+//                if(keyShare.getEncryptedNodeNum().contains("NA") && appDatabase.dao().getKeyStores().size() <= 1) {
+                if(keyShare.getEncryptedNodeNum().contains("NA")) {
                     byte[] proxyKey = singletoneECPRE.GenerateProxyKey(singletoneECPRE.invKey, otherPubKey);
                     byte[] renec = singletoneECPRE.ReEncryption(singletoneECPRE.pubKey, proxyKey);
                     keyShare.setCipher_data(renec);
