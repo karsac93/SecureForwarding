@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.util.Base64;
 
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
+import com.example.home.secureforwarding.DetailActivity;
 import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.Entities.KeyShares;
@@ -25,6 +26,7 @@ public class P2PHandler implements Serializable {
     Context context;
     AppDatabase appDatabase;
     SingletoneECPRE singletoneECPRE;
+    private static boolean flag = true;
 
     public P2PHandler(String id, byte[] otherPubKey, Context context) {
         this.id = id;
@@ -54,25 +56,44 @@ public class P2PHandler implements Serializable {
 //        SharesPOJO shares = new SharesPOJO(keyShares, dataShares, completeFiles);
 //        return shares;
 
-        List<KeyShares> keyShares = appDatabase.dao().getTestShares();
-        for(KeyShares keyShare : keyShares){
-            if(keyShare.getEncryptedNodeNum().contains("NA") && appDatabase.dao().getKeyStores().size() <= 1) {
-                byte[] proxyKey = singletoneECPRE.GenerateProxyKey(singletoneECPRE.invKey, otherPubKey);
-                byte[] renec = singletoneECPRE.ReEncryption(singletoneECPRE.pubKey, proxyKey);
-                keyShare.setCipher_data(renec);
-                keyShare.setEncryptedNodeNum(id);
+        List<KeyShares> keyShares = null;
+        List<DataShares> dataShares = null;
+        List<KeyShares> test = appDatabase.dao().getFourKeyShares();
+        if(test != null && test.size() > 0 &&
+                test.get(0).getType().equals(KeyConstant.OWNER_TYPE)){
+            if(flag){
+                keyShares = appDatabase.dao().getFourKeyShares();
+                dataShares = appDatabase.dao().getFourDataShares();
+                flag = false;
             }
-            keyShare.setSenderInfo(id);
-            keyShare.setStatus(KeyConstant.SENT_STATUS);
-            //appDatabase.dao().updateKeyShare(keyShare);
+            else{
+                keyShares = appDatabase.dao().getOneKeyshare(id);
+                dataShares = appDatabase.dao().getOneDataShare();
+            }
+            for(KeyShares keyShare : keyShares){
+                if(keyShare.getEncryptedNodeNum().contains("NA") && appDatabase.dao().getKeyStores().size() <= 1) {
+                    byte[] proxyKey = singletoneECPRE.GenerateProxyKey(singletoneECPRE.invKey, otherPubKey);
+                    byte[] renec = singletoneECPRE.ReEncryption(singletoneECPRE.pubKey, proxyKey);
+                    keyShare.setCipher_data(renec);
+                    keyShare.setEncryptedNodeNum(id);
+                }
+                keyShare.setSenderInfo(id);
+                keyShare.setStatus(KeyConstant.SENT_STATUS);
+                //appDatabase.dao().updateKeyShare(keyShare);
+            }
+
+
+            for(DataShares dataShare : dataShares){
+                dataShare.setStatus(KeyConstant.SENT_STATUS);
+                dataShare.setSenderInfo(id);
+                //appDatabase.dao().updateDataShare(dataShare);
+            }
+        }
+        else{
+            keyShares = appDatabase.dao().getFourKeyShares();
+            dataShares = appDatabase.dao().getFourDataShares();
         }
 
-        List<DataShares> dataShares = appDatabase.dao().getTestDataShares();
-        for(DataShares dataShare : dataShares){
-            dataShare.setStatus(KeyConstant.SENT_STATUS);
-            dataShare.setSenderInfo(id);
-            //appDatabase.dao().updateDataShare(dataShare);
-        }
 
         SharesPOJO shares = new SharesPOJO(keyShares, dataShares, new HashMap<String, String>());
         return shares;

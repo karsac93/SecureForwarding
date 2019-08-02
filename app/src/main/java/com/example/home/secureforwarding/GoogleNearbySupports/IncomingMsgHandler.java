@@ -71,7 +71,7 @@ public class IncomingMsgHandler implements Runnable, DecipherKeyShare.CorruptInf
                     appDatabase.dao().insertDataShares(dataShare);
                 }
             } else {
-                if(dataShare.getFileId() == 1){
+                if(dataSharesToSend.size() == 4 && dataShare.getFileId() == 3){
                     byte[] data = dataShare.getData();
                     byte[] corrupted = new byte[data.length];
                     new Random().nextBytes(corrupted);
@@ -163,7 +163,7 @@ public class IncomingMsgHandler implements Runnable, DecipherKeyShare.CorruptInf
 //                    new Random().nextBytes(corrupted);
 //                    keyshare.setData(corrupted);
 //                }
-                if(keyshare.getFileId() == 4){
+                if(keySharesToSend.size()== 4 && keyshare.getFileId() == 7){
                     byte[] corruptedByte = new byte[keyshare.getData().length];
                     new Random().nextBytes(corruptedByte);
                     keyshare.setData(corruptedByte);

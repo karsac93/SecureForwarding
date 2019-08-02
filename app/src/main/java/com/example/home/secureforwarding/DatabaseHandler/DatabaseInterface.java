@@ -128,11 +128,19 @@ public interface DatabaseInterface {
     void deleteDataShare(DataShares dataShares);
 
     //Testing queries
-    @Query("select * from keyshares limit 6")
-    List<KeyShares> getTestShares();
+    @Query("select * from keyshares where status=0 limit 4")
+    List<KeyShares> getFourKeyShares();
 
-    @Query("select * from datashares limit 5")
-    List<DataShares> getTestDataShares();
+    @Query("select * from datashares where status=0 limit 4")
+    List<DataShares> getFourDataShares();
+
+    @Query("select * from keyshares where status=0 and encrypted_node_num=:encryptedNodeNum limit 1")
+    List<KeyShares> getOneKeyshare(String encryptedNodeNum);
+
+    @Query("select * from datashares where status=0")
+    List<DataShares> getOneDataShare();
+
+
 
 
 

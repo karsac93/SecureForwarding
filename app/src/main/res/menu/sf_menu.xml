@@ -17,7 +17,7 @@
             <item
                 android:id="@+id/data_decoding"
                 android:title="Data Decoding"
-                android:visible="true"/>
+                android:visible="false"/>
         </menu>
     </item>
 </menu>
