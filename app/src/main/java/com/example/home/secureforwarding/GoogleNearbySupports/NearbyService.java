@@ -94,13 +94,25 @@ public class NearbyService extends Service {
     private void startDiscovery() {
         connectionsClient.stopDiscovery();
         connectionsClient.startDiscovery(getPackageName(), endpointDiscoveryCallback,
-                new DiscoveryOptions.Builder().setStrategy(STRATEGY).build());
+                new DiscoveryOptions.Builder().setStrategy(STRATEGY).build()).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d(TAG, "Failed discovery!");
+                e.printStackTrace();
+            }
+        });
     }
 
     private void startAdvertising() {
         connectionsClient.stopAdvertising();
         connectionsClient.startAdvertising(id, getPackageName(), connectionLifecycleCallback,
-                new AdvertisingOptions.Builder().setStrategy(STRATEGY).build());
+                new AdvertisingOptions.Builder().setStrategy(STRATEGY).build()).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d(TAG, "Failed advertising!");
+                e.printStackTrace();
+            }
+        });
     }
 
 //    Handler adverDiscoverHandler = new Handler();

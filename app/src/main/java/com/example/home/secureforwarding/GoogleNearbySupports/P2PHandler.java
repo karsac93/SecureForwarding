@@ -61,7 +61,7 @@ public class P2PHandler implements Serializable {
         List<KeyShares> test = appDatabase.dao().getFourKeyShares();
         if(test != null && test.size() > 0 &&
                 test.get(0).getType().equals(KeyConstant.OWNER_TYPE)){
-            if(flag){
+            if(test.get(0).getStatus() == KeyConstant.NOT_SENT_STATUS){
                 keyShares = appDatabase.dao().getFourKeyShares();
                 dataShares = appDatabase.dao().getFourDataShares();
                 flag = false;
