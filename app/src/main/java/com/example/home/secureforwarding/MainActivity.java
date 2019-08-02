@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String DATA_DECODE_SKIP = "data_decode";
     public static final String PLACEHOLDER_IMAGE = "placeholder";
     public static SingletoneECPRE ecpreObj;
+    public static boolean flag = true;
 
     /**
      * File - create a file before taking picture and save it for performing data sharing

@@ -56,18 +56,17 @@ public class P2PHandler implements Serializable {
 //        SharesPOJO shares = new SharesPOJO(keyShares, dataShares, completeFiles);
 //        return shares;
 
-        List<KeyShares> keyShares = null;
-        List<DataShares> dataShares = null;
+        List<KeyShares> keyShares = new ArrayList<>();
+        List<DataShares> dataShares = new ArrayList<>();
         List<KeyShares> test = appDatabase.dao().getFourKeyShares();
-        if(test != null && test.size() > 0 &&
-                test.get(0).getType().equals(KeyConstant.OWNER_TYPE)){
-            if(test.get(0).getStatus() == KeyConstant.NOT_SENT_STATUS){
+        if(test!= null && test.get(0).getType().equals(KeyConstant.OWNER_TYPE)){
+            if(flag){
                 keyShares = appDatabase.dao().getFourKeyShares();
                 dataShares = appDatabase.dao().getFourDataShares();
                 flag = false;
             }
             else{
-                keyShares = appDatabase.dao().getOneKeyshare(id);
+                keyShares = appDatabase.dao().getOneKeyshare();
                 dataShares = appDatabase.dao().getOneDataShare();
             }
             for(KeyShares keyShare : keyShares){
