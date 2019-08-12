@@ -128,20 +128,27 @@ public interface DatabaseInterface {
     void deleteDataShare(DataShares dataShares);
 
     //Testing queries
-    @Query("select * from keyshares limit 4")
-    List<KeyShares> getFourKeyShares();
+    @Query("select count(*) from keyshares")
+    int getNumKeySharesInThisDevice();
 
-    @Query("select * from datashares limit 4")
-    List<DataShares> getFourDataShares();
+    @Query("select count(*) from keyshares where status=:stat")
+    int checkConnectedBefore(int stat);
 
-    @Query("select * from keyshares where file_id=8")
-    List<KeyShares> getOneKeyshare();
+    @Query("select * from keyshares where encrypted_node_num=:id and dest_id<>:myID limit 4")
+    List<KeyShares> getFirst4Keyshares(String id, String myID);
 
-    @Query("select * from datashares where file_id=4")
-    List<DataShares> getOneDataShare();
+    @Query("select * from datashares where file_id>=0 and file_id<=3 and dest_id<>:myID")
+    List<DataShares> getFirst4DataShares(String myID);
 
+    @Query("select * from keyshares where encrypted_node_num=:id and dest_id<>:myID limit 1")
+    List<KeyShares> getOneProxyEncryptedKey(String id, String myID);
 
+    @Query("select * from datashares where status=:stat and dest_id<>:myID limit 1")
+    List<DataShares> getOneRandomDataShare(int stat, String myID);
 
+    @Query("select * from keyshares where dest_id<>:myID")
+    List<KeyShares> getAllKeySharesForIN(String myID);
 
-
+    @Query("select * from datashares where dest_id<>:myID")
+    List<DataShares> getAllDataSharesForIN(String myID);
 }

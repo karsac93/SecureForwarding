@@ -19,17 +19,22 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="com.example.home.secureforwarding.MainActivity">
+        <activity android:name="com.example.home.secureforwarding.MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".DetailActivity" />
-        <activity android:name=".CompleteFileActivites.CompleteFileActivity" />
-        <activity android:name=".ShareFileActivites.ShareFilesActivity" />
-        <activity android:name=".ShareFileActivites.ChooseEncryption" />
+        <activity android:name=".DetailActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".CompleteFileActivites.CompleteFileActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".ShareFileActivites.ShareFilesActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".ShareFileActivites.ChooseEncryption"
+            android:screenOrientation="portrait"/>
 
         <service
             android:name=".GoogleNearbySupports.NearbyService"

@@ -4,15 +4,16 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
+import android.util.Log;
 
 import com.example.home.secureforwarding.DatabaseHandler.AppDatabase;
-import com.example.home.secureforwarding.DetailActivity;
 import com.example.home.secureforwarding.Entities.CompleteFiles;
 import com.example.home.secureforwarding.Entities.DataShares;
 import com.example.home.secureforwarding.Entities.KeyShares;
 import com.example.home.secureforwarding.KeyHandler.KeyConstant;
 import com.example.home.secureforwarding.KeyHandler.SingletoneECPRE;
 import com.example.home.secureforwarding.MainActivity;
+import com.example.home.secureforwarding.SharedPreferenceHandler.SharedPreferenceHandler;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
@@ -26,7 +27,8 @@ public class P2PHandler implements Serializable {
     Context context;
     AppDatabase appDatabase;
     SingletoneECPRE singletoneECPRE;
-    private static boolean flag = true;
+    String myID;
+    public static final String TAG = P2PHandler.class.getCanonicalName();
 
     public P2PHandler(String id, byte[] otherPubKey, Context context) {
         this.id = id;
@@ -34,6 +36,7 @@ public class P2PHandler implements Serializable {
         this.context = context;
         appDatabase = AppDatabase.getAppDatabase(context);
         singletoneECPRE = MainActivity.ecpreObj;
+        myID = SharedPreferenceHandler.getStringValues(context, MainActivity.DEVICE_ID);
     }
 
     public SharesPOJO fetchFilesToSend() {
@@ -56,22 +59,32 @@ public class P2PHandler implements Serializable {
 //        SharesPOJO shares = new SharesPOJO(keyShares, dataShares, completeFiles);
 //        return shares;
 
-        List<KeyShares> keyShares = new ArrayList<>();
-        List<DataShares> dataShares = new ArrayList<>();
-        List<KeyShares> test = appDatabase.dao().getFourKeyShares();
-        if(test!= null && test.get(0).getType().equals(KeyConstant.OWNER_TYPE)){
-            if(flag){
-                keyShares = appDatabase.dao().getFourKeyShares();
-                dataShares = appDatabase.dao().getFourDataShares();
-                flag = false;
+            List<KeyShares> keyShares = new ArrayList<>();
+            List<DataShares> dataShares = new ArrayList<>();
+            int countCheck = appDatabase.dao().getNumKeySharesInThisDevice();
+            if(countCheck == 8){
+                Log.d(TAG, "Inside P2P handler of source");
+                int numSent = appDatabase.dao().checkConnectedBefore(KeyConstant.SENT_STATUS);
+                if(numSent == 0){
+                    Log.d(TAG, "Inside code to send for first intermediate node!");
+                    keyShares = appDatabase.dao().getFirst4Keyshares(id, myID);
+                    dataShares = appDatabase.dao().getFirst4DataShares(myID);
+                }
+                else{
+                    Log.d(TAG, "Sending messages to the second device!");
+                    keyShares = appDatabase.dao().getOneProxyEncryptedKey(id, myID);
+                    dataShares = appDatabase.dao().
+                            getOneRandomDataShare(KeyConstant.NOT_SENT_STATUS, myID);
+                }
             }
             else{
-                keyShares = appDatabase.dao().getOneKeyshare();
-                dataShares = appDatabase.dao().getOneDataShare();
+                Log.d(TAG, "Getting all msgs for the intermediate message");
+                keyShares = appDatabase.dao().getAllKeySharesForIN(myID);
+                dataShares = appDatabase.dao().getAllDataSharesForIN(myID);
             }
+
             for(KeyShares keyShare : keyShares){
-//                if(keyShare.getEncryptedNodeNum().contains("NA") && appDatabase.dao().getKeyStores().size() <= 1) {
-                if(keyShare.getEncryptedNodeNum().contains("NA")) {
+                if(keyShare.getEncryptedNodeNum().contains("NA") && appDatabase.dao().getKeyStores().size() <= 1) {
                     byte[] proxyKey = singletoneECPRE.GenerateProxyKey(singletoneECPRE.invKey, otherPubKey);
                     byte[] renec = singletoneECPRE.ReEncryption(singletoneECPRE.pubKey, proxyKey);
                     keyShare.setCipher_data(renec);
@@ -79,20 +92,15 @@ public class P2PHandler implements Serializable {
                 }
                 keyShare.setSenderInfo(id);
                 keyShare.setStatus(KeyConstant.SENT_STATUS);
-                appDatabase.dao().updateKeyShare(keyShare);
+//                appDatabase.dao().updateKeyShare(keyShare);
             }
 
 
             for(DataShares dataShare : dataShares){
                 dataShare.setStatus(KeyConstant.SENT_STATUS);
                 dataShare.setSenderInfo(id);
-                appDatabase.dao().updateDataShare(dataShare);
+//                appDatabase.dao().updateDataShare(dataShare);
             }
-        }
-        else{
-            keyShares = appDatabase.dao().getFourKeyShares();
-            dataShares = appDatabase.dao().getFourDataShares();
-        }
 
 
         SharesPOJO shares = new SharesPOJO(keyShares, dataShares, new HashMap<String, String>());

@@ -53,6 +53,7 @@ public class NearbyService extends Service {
     private static final Strategy STRATEGY = Strategy.P2P_POINT_TO_POINT;
     private String lastConnected;
     private String connectedFella;
+    SharesPOJO pojo = null;
 
     public NearbyService() {
     }
@@ -204,7 +205,6 @@ public class NearbyService extends Service {
         @Override
         public void onPayloadReceived(@NonNull String endpointId, @NonNull Payload payload) {
             lastConnected = endpointId;
-            SharesPOJO pojo = null;
             if (payload.getType() == Payload.Type.STREAM) {
                 Object receivedObj;
                 InputStream inputStream = payload.asStream().asInputStream();
@@ -237,7 +237,7 @@ public class NearbyService extends Service {
             if (payload.getType() == Payload.Type.BYTES) {
                 String msg = new String(payload.asBytes());
                 if (receivedMsg == true && msg.contains(MSG_RECIVED)) {
-                    //updateKeysData(pojo);
+                    updateKeysData(pojo);
                     Toast.makeText(NearbyService.this, "File transferred!", Toast.LENGTH_SHORT).show();
                     setFlagsFalse();
                     connectionsClient.stopAllEndpoints();
